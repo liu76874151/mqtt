@@ -11,5 +11,12 @@
 
     <artifactId>com.aliyun.mqtt.mqtt-client</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>mqtt</groupId>
+            <artifactId>com.aliyun.mqtt.mqtt-core</artifactId>
+            <version>${pom.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>

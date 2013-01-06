@@ -9,13 +9,51 @@ package com.aliyun.mqtt.core.message;
  */
 public abstract class Message {
 
-    private Header header;
+    protected short type;
 
-    public Header getHeader() {
-        return header;
+    private boolean dup;
+
+    private short qos;
+
+    private boolean retain;
+
+    private int remainLength;
+
+    public short getType() {
+        return type;
     }
 
-    public void setHeader(Header header) {
-        this.header = header;
+    public boolean isDup() {
+        return dup;
     }
+
+    public void setDup(boolean dup) {
+        this.dup = dup;
+    }
+
+    public short getQos() {
+        return qos;
+    }
+
+    public void setQos(short qos) {
+        this.qos = qos;
+    }
+
+    public boolean isRetain() {
+        return retain;
+    }
+
+    public void setRetain(boolean retain) {
+        this.retain = retain;
+    }
+
+    public int getRemainLength() {
+        return remainLength;
+    }
+
+    public void setRemainLength(int remainLength) {
+        this.remainLength = remainLength;
+    }
+
+    public abstract String getTypeName();
 }

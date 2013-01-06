@@ -1,0 +1,91 @@
+package com.aliyun.mqtt.core.parser;
+
+import com.aliyun.mqtt.core.MQTT;
+import com.aliyun.mqtt.core.MQTTException;
+import com.aliyun.mqtt.core.message.ConnectMessage;
+import com.aliyun.mqtt.core.message.Message;
+
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: lijing
+ * Date: 13-1-6
+ * Time: 下午9:54
+ * To change this template use File | Settings | File Templates.
+ */
+public class ConnectEncoder extends Encoder {
+
+    @Override
+    public ByteBuffer encode(Message msg) {
+        ByteArrayOutputStream out = null;
+        ByteArrayOutputStream data = null;
+        try {
+            out = new ByteArrayOutputStream();
+            ConnectMessage message = (ConnectMessage)msg;
+
+            /* variable header */
+            data = new ByteArrayOutputStream();
+            /* version */
+            data.write(MQTT.VERSION.getBytes("UTF-8"));
+            /* connection flags */
+            byte connectionFlags = 0;
+            if (message.isHasUsername()) {
+                connectionFlags |= 0x080;
+            }
+            if (message.isHasPassword()) {
+                connectionFlags |= 0x040;
+            }
+            if (message.isWillFlag()) {
+                connectionFlags |= 0x04;
+            }
+            connectionFlags |= ((message.getWillQos() & 0x03) << 3);
+            if (message.isWillRetain()) {
+                connectionFlags |= 0x020;
+            }
+            if (message.isCleanSession()) {
+                connectionFlags |= 0x02;
+            }
+            data.write(connectionFlags);
+            /* keep alive timer */
+            data.write(message.getKeepAlive());
+            /* variable part */
+            if (message.getClientID() != null) {
+                encodeString(message.getClientID(), data);
+                if (message.isHasUsername() && message.getUsername() != null) {
+                    encodeString(message.getUsername(), data);
+                }
+                if (message.isHasPassword() && message.getPassword() != null) {
+                    encodeString(message.getPassword(), data);
+                }
+            }
+            message.setRemainLength(data.size());
+
+            /* fixed header */
+            encodeHeader(message, out);
+            /* remain length */
+            encodeRemainLength(message.getRemainLength(), out);
+            /* data */
+            out.write(data.toByteArray());
+            return ByteBuffer.wrap(out.toByteArray());
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+                if (data != null) {
+                    data.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+}
