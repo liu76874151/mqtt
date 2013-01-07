@@ -9,37 +9,42 @@ import com.aliyun.mqtt.core.parser.MQTTParser;
 public class Context {
 	private Client client;
 
+    private MessageQueue messageQueue;
+
+    private MessageHandler messageHandler;
+
+    private MQTTParser parser;
+
 	public Context(Client client) {
 		this.client = client;
 	}
 
+    public void registeMessageQueue(MessageQueue messageQueue) {
+        this.messageQueue = messageQueue;
+    }
+
+    public void registeMessageHandler(MessageHandler messageHandler) {
+        this.messageHandler = messageHandler;
+    }
+
+    public void registeParser(MQTTParser parser) {
+        this.parser = parser;
+    }
+
 	public MessageQueue getMessageQueue() {
-		return client.getMessageQueue();
+		return messageQueue;
 	}
 
 	public MessageHandler getMessageHandler() {
-		return client.getMessageHandler();
+		return messageHandler;
 	}
 
 	public MQTTParser getParser() {
-		return client.getMQTTParser();
-	}
-	
-	public ExecutorService getExecutor() {
-		return client.getExecutor();
+		return parser;
 	}
 
 	public Client getClient() {
 		return client;
-	}
-	
-	public boolean execute(Runnable runnable) {
-		ExecutorService executor = getExecutor();
-		if (!executor.isShutdown() && !executor.isTerminated()) {
-			executor.execute(runnable);
-			return true;
-		}
-		return false;
 	}
 
 	public void stopClient() {

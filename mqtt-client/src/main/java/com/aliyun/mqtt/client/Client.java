@@ -7,6 +7,8 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,16 +17,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.aliyun.mqtt.client.callback.IPublishCallback;
 import com.aliyun.mqtt.client.message.MessageHandler;
 import com.aliyun.mqtt.client.message.MessageQueue;
 import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.MQTTException;
-import com.aliyun.mqtt.core.message.ConnAckMessage;
-import com.aliyun.mqtt.core.message.ConnectMessage;
-import com.aliyun.mqtt.core.message.Message;
-import com.aliyun.mqtt.core.message.PingReqMessage;
-import com.aliyun.mqtt.core.message.SubAckMessage;
-import com.aliyun.mqtt.core.message.SubscribeMessage;
+import com.aliyun.mqtt.core.message.*;
 import com.aliyun.mqtt.core.parser.ConnAckDecoder;
 import com.aliyun.mqtt.core.parser.ConnectEncoder;
 import com.aliyun.mqtt.core.parser.MQTTParser;
@@ -51,6 +49,8 @@ public class Client {
 	private int port = 1883;
 	private String clientID;
 
+    private Map<String, IPublishCallback> registedCallbacks = new HashMap<String, IPublishCallback>();
+
 	private MQTTParser parser = null;
 	private MessageQueue messageQueue = null;
 	private MessageHandler handler = null;
@@ -60,8 +60,6 @@ public class Client {
 	private ScheduledFuture heartbeatHandler;
 
 	private ConnAckMessage connAckMessage = null;
-
-	private IMessageCallback callback = null;
 
 	private Context context = new Context(this);
 
@@ -88,13 +86,11 @@ public class Client {
 		parser.registeDecoder(new PingRespDecoder());
 		parser.registeDecoder(new SubAckDecoder());
 
+        context.registeParser(parser);
 		messageQueue = new MessageQueue();
+        context.registeMessageQueue(messageQueue);
 		handler = new MessageHandler(context);
 		scheduler = Executors.newScheduledThreadPool(1);
-	}
-
-	public void setMessageCallback(IMessageCallback callback) {
-		this.callback = callback;
 	}
 
 	public void connect() {
@@ -109,7 +105,7 @@ public class Client {
 		message.setClientID(clientID);
 		message.setKeepAlive(KEEPALIVE_SECS);
 		message.setCleanSession(cleanSession);
-		addMessage(message);
+        addSendMessage(message);
 		// suspend until the server respond with CONN_ACK
 		boolean unlocked = false;
 		try {
@@ -171,6 +167,7 @@ public class Client {
 			heartbeatHandler.cancel(false);
 		}
 		messageQueue.clear();
+        registedCallbacks.clear();
 		if (!scheduler.isShutdown()) {
 			scheduler.shutdown();
 		}
@@ -205,6 +202,10 @@ public class Client {
 		}
 	}
 
+    public void registeCallback(String name, IPublishCallback callback) {
+        this.registedCallbacks.put(name, callback);
+    }
+
 	public void connAckCallback(ConnAckMessage message) {
 		logger.info("connAckCallback invoked, ackCode=" + message.getAck());
 		connAckMessage = message;
@@ -212,20 +213,35 @@ public class Client {
 	}
 
 	public void subscribe(String topic) {
-		SubscribeMessage message = new SubscribeMessage();
-		message.setMessageID(1);
-		message.addTopic(topic, MQTT.QOS_MOST_ONCE);
-		addMessage(message);
+        subscribe(topic, MQTT.QOS_MOST_ONCE);
 	}
+
+    public void subscribe(String topic, byte qos) {
+        subscribe(topic, qos, null);
+    }
+
+    public void subscribe(String topic, byte qos, IPublishCallback callback) {
+        SubscribeMessage message = new SubscribeMessage();
+        message.setMessageID(1);
+        message.addTopic(topic, qos);
+        addSendMessage(message);
+        if (callback != null) {
+            registeCallback(topic, callback);
+        }
+    }
 
 	public void subAckCallback(SubAckMessage message) {
 		logger.info("subAckCallback invoked, messageID="
 				+ message.getMessageID());
 	}
 
+    public void onPublished(PublishMessage publishMessage) {
+
+    }
+
 	final Runnable pingreqDeamon = new Runnable() {
 		public void run() {
-			addMessage(new PingReqMessage());
+            addSendMessage(new PingReqMessage());
 		}
 	};
 
@@ -237,7 +253,7 @@ public class Client {
 				KEEPALIVE_SECS, KEEPALIVE_SECS, TimeUnit.SECONDS);
 	}
 
-	protected void addMessage(Message message) {
+	protected void addSendMessage(Message message) {
 		try {
 			ByteBuffer buffer = parser.encode(message);
 			if (buffer != null) {
