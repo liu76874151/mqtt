@@ -44,14 +44,14 @@ public abstract class Encoder {
         } while(remainLength > 0);
     }
 
-    protected void encodeLength(short length, OutputStream out) throws IOException, MQTTException {
+    protected void encodeLength(int length, OutputStream out) throws IOException, MQTTException {
         out.write((byte) ((length & 0xFF00) >> 8)); //msb
         out.write((byte) (length & 0x00FF)); //lsb
     }
 
     protected void encodeString(String string, OutputStream out) throws IOException, MQTTException {
         byte[] bs = string.getBytes("UTF-8");
-        encodeLength((short)bs.length, out);
+        encodeLength(bs.length, out);
         out.write(bs);
     }
 

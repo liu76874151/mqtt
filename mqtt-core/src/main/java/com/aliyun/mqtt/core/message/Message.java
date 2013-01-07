@@ -9,17 +9,17 @@ package com.aliyun.mqtt.core.message;
  */
 public abstract class Message {
 
-    protected short type;
+    protected byte type;
 
-    private boolean dup;
+    private boolean dup = false;
 
-    private short qos;
+    private short qos = 0;
 
-    private boolean retain;
+    private boolean retain = false;
 
-    private int remainLength;
+    private int remainLength = 0;
 
-    public short getType() {
+    public byte getType() {
         return type;
     }
 
@@ -55,5 +55,4 @@ public abstract class Message {
         this.remainLength = remainLength;
     }
 
-    public abstract String getTypeName();
 }

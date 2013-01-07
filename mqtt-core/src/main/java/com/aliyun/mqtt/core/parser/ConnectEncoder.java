@@ -52,7 +52,7 @@ public class ConnectEncoder extends Encoder {
             }
             data.write(connectionFlags);
             /* keep alive timer */
-            data.write(message.getKeepAlive());
+            encodeLength(message.getKeepAlive(), data);
             /* variable part */
             if (message.getClientID() != null) {
                 encodeString(message.getClientID(), data);

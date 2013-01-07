@@ -7,7 +7,7 @@ package com.aliyun.mqtt.core;
  * Time: 下午10:51
  * To change this template use File | Settings | File Templates.
  */
-public class MQTTException extends Exception {
+public class MQTTException extends RuntimeException {
     public MQTTException(String message) {
         super(message);
     }

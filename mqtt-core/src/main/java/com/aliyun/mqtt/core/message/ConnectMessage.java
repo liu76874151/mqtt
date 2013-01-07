@@ -21,7 +21,7 @@ public class ConnectMessage extends Message {
     private boolean willFlag;
     private boolean cleanSession;
 
-    private short keepAlive;
+    private int keepAlive;
 
     private String clientID;
 
@@ -76,11 +76,11 @@ public class ConnectMessage extends Message {
         this.cleanSession = cleanSession;
     }
 
-    public short getKeepAlive() {
+    public int getKeepAlive() {
         return keepAlive;
     }
 
-    public void setKeepAlive(short keepAlive) {
+    public void setKeepAlive(int keepAlive) {
         this.keepAlive = keepAlive;
     }
 
@@ -106,10 +106,5 @@ public class ConnectMessage extends Message {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    @Override
-    public String getTypeName() {
-        return "CONNECT";
     }
 }
