@@ -8,12 +8,12 @@ package com.aliyun.mqtt.core.message;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class Message {
-
+	
     protected byte type;
 
     private boolean dup = false;
 
-    private short qos = 0;
+    private byte qos = 0;
 
     private boolean retain = false;
 
@@ -31,11 +31,11 @@ public abstract class Message {
         this.dup = dup;
     }
 
-    public short getQos() {
+    public byte getQos() {
         return qos;
     }
 
-    public void setQos(short qos) {
+    public void setQos(byte qos) {
         this.qos = qos;
     }
 

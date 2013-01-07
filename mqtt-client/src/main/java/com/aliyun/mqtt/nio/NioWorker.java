@@ -1,5 +1,6 @@
 package com.aliyun.mqtt.nio;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -70,17 +71,21 @@ public class NioWorker implements Runnable {
 	private void readResponse(SocketChannel channel) throws IOException {
 		ByteBuffer byteBuffer = ByteBuffer.wrap(array);
 		int count = channel.read(byteBuffer);
-		if (count != -1) {
-			byteBuffer.flip();
-			byte[] bs = new byte[count];
-			byteBuffer.get(bs);
-			ByteBuffer returnBuffer = ByteBuffer.allocate(count);
+		if(count > 0) {
+			ByteArrayOutputStream out = new ByteArrayOutputStream(count);
+			while (count > 0) {
+				byteBuffer.flip();
+				out.write(byteBuffer.array(), out.size(), byteBuffer.remaining());
+				byteBuffer.clear();
+				count = channel.read(byteBuffer);
+			}
+			ByteBuffer returnBuffer = ByteBuffer.allocate(out.size());
 			returnBuffer.clear();
-			returnBuffer.put(bs);
+			returnBuffer.put(out.toByteArray());
+			out.close();
 			returnBuffer.flip();
 			handler.handle(returnBuffer);
-		}
-		if (count < 0) {
+		} else if (count < 0) {
 			stopClient();
 		}
 	}

@@ -5,7 +5,7 @@ import com.aliyun.mqtt.core.MQTT;
 public class ConnAckMessage extends Message {
 	
 	public ConnAckMessage() {
-		this.type = MQTT.MESSAGE_TYPE_CONNECT;
+		this.type = MQTT.MESSAGE_TYPE_CONNACK;
 	}
 	
 	private byte ack;

@@ -11,4 +11,17 @@ public class MQTTException extends RuntimeException {
     public MQTTException(String message) {
         super(message);
     }
+
+	public MQTTException() {
+		super();
+	}
+
+	public MQTTException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public MQTTException(Throwable cause) {
+		super(cause);
+	}
+    
 }

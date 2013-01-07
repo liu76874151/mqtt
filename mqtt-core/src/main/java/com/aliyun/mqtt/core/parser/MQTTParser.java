@@ -45,7 +45,6 @@ public class MQTTParser {
 	}
 	
 	public Message decode(ByteBuffer buffer) {
-		System.out.println(MQTT.TYPES.containsValue("CONNACK"));
 		String name = MQTT.TYPES.get((byte)(buffer.get() >> 4));
 		if(name == null) {
 			throw new MQTTException("Message type error");
