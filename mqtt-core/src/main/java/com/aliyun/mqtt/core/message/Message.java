@@ -1,58 +1,55 @@
 package com.aliyun.mqtt.core.message;
 
 /**
- * Created with IntelliJ IDEA.
- * User: lijing
- * Date: 13-1-6
- * Time: 下午9:39
- * To change this template use File | Settings | File Templates.
+ * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午9:39 To change
+ * this template use File | Settings | File Templates.
  */
 public abstract class Message {
-	
-    protected byte type;
 
-    private boolean dup = false;
+	protected byte type;
 
-    private byte qos = 0;
+	private boolean dup = false;
 
-    private boolean retain = false;
+	private byte qos = 0;
 
-    private int remainLength = 0;
+	private boolean retain = false;
 
-    public byte getType() {
-        return type;
-    }
+	private int remainLength = 0;
 
-    public boolean isDup() {
-        return dup;
-    }
+	public byte getType() {
+		return type;
+	}
 
-    public void setDup(boolean dup) {
-        this.dup = dup;
-    }
+	public boolean isDup() {
+		return dup;
+	}
 
-    public byte getQos() {
-        return qos;
-    }
+	public void setDup(boolean dup) {
+		this.dup = dup;
+	}
 
-    public void setQos(byte qos) {
-        this.qos = qos;
-    }
+	public byte getQos() {
+		return qos;
+	}
 
-    public boolean isRetain() {
-        return retain;
-    }
+	public void setQos(byte qos) {
+		this.qos = qos;
+	}
 
-    public void setRetain(boolean retain) {
-        this.retain = retain;
-    }
+	public boolean isRetain() {
+		return retain;
+	}
 
-    public int getRemainLength() {
-        return remainLength;
-    }
+	public void setRetain(boolean retain) {
+		this.retain = retain;
+	}
 
-    public void setRemainLength(int remainLength) {
-        this.remainLength = remainLength;
-    }
+	public int getRemainLength() {
+		return remainLength;
+	}
+
+	public void setRemainLength(int remainLength) {
+		this.remainLength = remainLength;
+	}
 
 }

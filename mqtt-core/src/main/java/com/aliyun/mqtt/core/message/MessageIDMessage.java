@@ -1,7 +1,7 @@
 package com.aliyun.mqtt.core.message;
 
 public class MessageIDMessage extends Message {
-	
+
 	private int messageID;
 
 	public int getMessageID() {
@@ -11,7 +11,5 @@ public class MessageIDMessage extends Message {
 	public void setMessageID(int messageID) {
 		this.messageID = messageID;
 	}
-	
-	
 
 }

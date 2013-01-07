@@ -12,8 +12,8 @@ public class ConnAckDecoder extends Decoder {
 	public Message decode(ByteBuffer buffer) {
 		ConnAckMessage message = new ConnAckMessage();
 		decodeHeader(message, buffer);
-		
-		if(message.getRemainLength() != 2 || buffer.remaining() < 2) {
+
+		if (message.getRemainLength() != 2 || buffer.remaining() < 2) {
 			throw new MQTTException("Protocol error - error data");
 		}
 		buffer.get();

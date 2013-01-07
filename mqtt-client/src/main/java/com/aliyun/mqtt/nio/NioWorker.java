@@ -8,8 +8,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.logging.Logger;
 
-import com.aliyun.mqtt.client.message.MessageHandler;
-import com.aliyun.mqtt.client.message.MessageQueue;
+import com.aliyun.mqtt.client.Context;
+import com.aliyun.mqtt.core.MQTTException;
 
 /**
  * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午8:19 To change
@@ -21,15 +21,16 @@ public class NioWorker implements Runnable {
 
 	private SocketChannel socketChannel = null;
 	private Selector selector = null;
-	
-	private MessageHandler handler = null;
+
+	private Context context = null;
 
 	private byte[] array = new byte[1024];
 
-	public NioWorker(SocketChannel socketChannel, Selector selector, MessageHandler handler) {
+	public NioWorker(SocketChannel socketChannel, Selector selector,
+			Context context) {
 		this.socketChannel = socketChannel;
 		this.selector = selector;
-		this.handler = handler;
+		this.context = context;
 	}
 
 	public void run() {
@@ -71,11 +72,12 @@ public class NioWorker implements Runnable {
 	private void readResponse(SocketChannel channel) throws IOException {
 		ByteBuffer byteBuffer = ByteBuffer.wrap(array);
 		int count = channel.read(byteBuffer);
-		if(count > 0) {
+		if (count > 0) {
 			ByteArrayOutputStream out = new ByteArrayOutputStream(count);
 			while (count > 0) {
 				byteBuffer.flip();
-				out.write(byteBuffer.array(), out.size(), byteBuffer.remaining());
+				out.write(byteBuffer.array(), out.size(),
+						byteBuffer.remaining());
 				byteBuffer.clear();
 				count = channel.read(byteBuffer);
 			}
@@ -84,27 +86,25 @@ public class NioWorker implements Runnable {
 			returnBuffer.put(out.toByteArray());
 			out.close();
 			returnBuffer.flip();
-			handler.handle(returnBuffer);
+			try {
+				context.getMessageHandler().handle(returnBuffer);
+			} catch (MQTTException e) {
+				e.printStackTrace();
+			}
+
 		} else if (count < 0) {
 			stopClient();
 		}
 	}
 
 	public void sendRequest(SocketChannel channel) throws IOException {
-		ByteBuffer message = MessageQueue.open().get();
-		if(message != null) {
+		ByteBuffer message = context.getMessageQueue().get();
+		if (message != null) {
 			channel.write(message);
 		}
 	}
 
 	public void stopClient() {
-		if (socketChannel.isConnected() && !socketChannel.isOpen()) {
-			try {
-				socketChannel.close();
-				logger.info("server_socket has connected");
-			} catch (IOException e) {
-				logger.warning("Channel closed to failed: IOException");
-			}
-		}
+		context.stopClient();
 	}
 }

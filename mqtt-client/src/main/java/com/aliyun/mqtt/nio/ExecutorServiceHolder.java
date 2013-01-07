@@ -11,23 +11,18 @@ public class ExecutorServiceHolder {
 
 	private ExecutorService executor = Executors.newFixedThreadPool(5);
 
-	private static ExecutorServiceHolder instance;
-	
-	private ExecutorServiceHolder() {
+	public ExecutorServiceHolder() {
 	}
-	
-	public static ExecutorServiceHolder get() {
-		if(instance == null) {
-			instance = new ExecutorServiceHolder();
-		}
-		return instance;
-	}
-	
+
 	public void execute(Runnable runnable) {
 		executor.execute(runnable);
 	}
 
 	public void shutdown() {
 		executor.shutdown();
+	}
+
+	public void shutdownNow() {
+		executor.shutdownNow();
 	}
 }
