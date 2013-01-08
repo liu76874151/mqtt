@@ -30,10 +30,6 @@ public class MQTT {
 	public final static byte QOS_LEAST_ONCE = 1;
 	public final static byte QOS_ONCE = 2;
 
-	public static enum QOSType {
-		MOST_ONE, LEAST_ONE, EXACTLY_ONCE, RESERVED;
-	}
-
 	public final static Map<Byte, String> TYPES = new HashMap<Byte, String>();
 	static {
 		TYPES.put((byte) 0x01, "CONNECT");

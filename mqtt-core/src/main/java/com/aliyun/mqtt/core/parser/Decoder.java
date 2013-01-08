@@ -49,10 +49,10 @@ public abstract class Decoder {
 		int lsb = buffer.get() & 0xFF;
 		return (msb << 8) | lsb;
 	}
-	
+
 	protected String decodeString(ByteBuffer buffer) {
 		int length = decodeLength(buffer);
-		if(length > buffer.remaining()) {
+		if (length > buffer.remaining()) {
 			throw new MQTTException("Protocol error - error data");
 		}
 		byte[] str = new byte[length];

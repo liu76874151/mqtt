@@ -12,7 +12,7 @@ public class PubCompEncoder extends Encoder {
 	public ByteBuffer encode(Message msg) {
 		try {
 			ByteBuffer buffer = ByteBuffer.allocate(4);
-			PubCompMessage message = (PubCompMessage)msg;
+			PubCompMessage message = (PubCompMessage) msg;
 			buffer.put(encodeHeader(message));
 			buffer.put((byte) 0x02);
 			encodeLength(message.getMessageID(), buffer);

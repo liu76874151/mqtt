@@ -7,5 +7,5 @@ public class PubAckMessage extends MessageIDMessage {
 	public PubAckMessage() {
 		this.type = MQTT.MESSAGE_TYPE_PUBACK;
 	}
-	
+
 }

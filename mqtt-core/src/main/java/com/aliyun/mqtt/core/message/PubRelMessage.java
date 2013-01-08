@@ -8,5 +8,5 @@ public class PubRelMessage extends MessageIDMessage {
 		this.type = MQTT.MESSAGE_TYPE_PUBREL;
 		setQos(MQTT.QOS_LEAST_ONCE);
 	}
-	
+
 }

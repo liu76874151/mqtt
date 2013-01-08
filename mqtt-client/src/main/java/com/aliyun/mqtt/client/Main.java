@@ -12,13 +12,14 @@ public class Main {
 	public static void main(String[] args) throws InterruptedException {
 		Client client = new Client("127.0.0.1", 1883, "client2");
 		client.connect();
-		client.subscribe("/topic", MQTT.QOS_ONCE, new AbstractPublishCallback() {
-			public void published(String topic, byte[] payload) {
-				System.out.println(topic);
-				System.out.println(new String(payload));
-			}
-		});
-		
+		client.subscribe("/topic", MQTT.QOS_ONCE,
+				new AbstractPublishCallback() {
+					public void published(String topic, byte[] payload) {
+						System.out.println(topic);
+						System.out.println(new String(payload));
+					}
+				});
+
 		Thread.sleep(3000);
 		client.publish("/topic", "hello lijing".getBytes());
 		client.publish("/topic", "hello lijing1".getBytes());

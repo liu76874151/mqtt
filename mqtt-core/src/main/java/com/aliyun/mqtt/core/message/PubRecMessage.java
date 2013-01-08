@@ -8,5 +8,5 @@ public class PubRecMessage extends MessageIDMessage {
 		this.type = MQTT.MESSAGE_TYPE_PUBREC;
 		setQos(MQTT.QOS_LEAST_ONCE);
 	}
-	
+
 }

@@ -12,7 +12,7 @@ public class PubRecEncoder extends Encoder {
 	public ByteBuffer encode(Message msg) {
 		try {
 			ByteBuffer buffer = ByteBuffer.allocate(4);
-			PubRecMessage message = (PubRecMessage)msg;
+			PubRecMessage message = (PubRecMessage) msg;
 			buffer.put(encodeHeader(message));
 			buffer.put((byte) 0x02);
 			encodeLength(message.getMessageID(), buffer);

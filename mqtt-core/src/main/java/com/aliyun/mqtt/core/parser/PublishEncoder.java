@@ -22,7 +22,8 @@ public class PublishEncoder extends Encoder {
 			/* topic */
 			encodeString(message.getTopic(), data);
 			/* message id */
-			if(message.getQos() == MQTT.QOS_LEAST_ONCE || message.getQos() == MQTT.QOS_ONCE) {
+			if (message.getQos() == MQTT.QOS_LEAST_ONCE
+					|| message.getQos() == MQTT.QOS_ONCE) {
 				encodeLength(message.getMessageID(), data);
 			}
 			/* payload */

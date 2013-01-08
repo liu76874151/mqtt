@@ -15,12 +15,15 @@ public class PublishDecoder extends Decoder {
 		decodeHeader(message, buffer);
 		int position = buffer.position();
 		message.setTopic(decodeString(buffer));
-		if (message.getQos() == MQTT.QOS_LEAST_ONCE || message.getQos() == MQTT.QOS_ONCE) {
+		if (message.getQos() == MQTT.QOS_LEAST_ONCE
+				|| message.getQos() == MQTT.QOS_ONCE) {
 			message.setMessageID(decodeLength(buffer));
 		}
-		int payloadLength = message.getRemainLength() - (buffer.position() - position);
+		int payloadLength = message.getRemainLength()
+				- (buffer.position() - position);
 		if (payloadLength < 0 || payloadLength > buffer.remaining()) {
-			throw new MQTTException("Protocol error - error data remaining length");
+			throw new MQTTException(
+					"Protocol error - error data remaining length");
 		}
 		byte[] payload = new byte[payloadLength];
 		buffer.get(payload);
