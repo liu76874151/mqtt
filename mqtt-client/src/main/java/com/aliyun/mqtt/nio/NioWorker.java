@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.logging.Logger;
 
 import com.aliyun.mqtt.client.Context;
 import com.aliyun.mqtt.core.MQTTException;
@@ -16,8 +15,6 @@ import com.aliyun.mqtt.core.MQTTException;
  * this template use File | Settings | File Templates.
  */
 public class NioWorker implements Runnable {
-
-	private static Logger logger = Logger.getLogger("mqtt-client");
 
 	private SocketChannel socketChannel = null;
 	private Selector selector = null;
@@ -39,7 +36,7 @@ public class NioWorker implements Runnable {
 				if (!socketChannel.isOpen()) {
 					break;
 				}
-				if (selector.select(30) > 0) {
+				if (selector.select(0) > 0) {
 					doSelector();
 				}
 			}
@@ -76,8 +73,7 @@ public class NioWorker implements Runnable {
 			ByteArrayOutputStream out = new ByteArrayOutputStream(count);
 			while (count > 0) {
 				byteBuffer.flip();
-				out.write(byteBuffer.array(), out.size(),
-						byteBuffer.remaining());
+				out.write(byteBuffer.array(), 0, byteBuffer.remaining());
 				byteBuffer.clear();
 				count = channel.read(byteBuffer);
 			}
@@ -87,7 +83,10 @@ public class NioWorker implements Runnable {
 			out.close();
 			returnBuffer.flip();
 			try {
-				context.getMessageHandler().handle(returnBuffer);
+				ByteBuffer b = context.getMessageHandler().handle(returnBuffer);
+				while (b != null && b.remaining() >= 2) {
+					b = context.getMessageHandler().handle(b);
+				}
 			} catch (MQTTException e) {
 				e.printStackTrace();
 			}

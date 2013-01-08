@@ -12,15 +12,15 @@ import com.aliyun.mqtt.core.parser.MQTTParser;
 public class Context {
 	private Client client;
 
-	private MessageQueue messageQueue;
+	private MessageQueue messageQueue = new MessageQueue();
 
-	private MessageHandler messageHandler;
+	private MessageHandler messageHandler = new MessageHandler(this);
 
 	private MQTTParser parser;
 
 	private ScheduledExecutorService scheduler;
 
-	private MessageSender sender;
+	private MessageSender sender = new MessageSender(this);
 
 	private MessageIDGenerator messageIDGenerator = new MessageIDGenerator();
 
@@ -34,24 +34,12 @@ public class Context {
 		return messageIDGenerator.next();
 	}
 
-	public void registeMessageQueue(MessageQueue messageQueue) {
-		this.messageQueue = messageQueue;
-	}
-
-	public void registeMessageHandler(MessageHandler messageHandler) {
-		this.messageHandler = messageHandler;
-	}
-
 	public void registeParser(MQTTParser parser) {
 		this.parser = parser;
 	}
 
 	public void registeScheduler(ScheduledExecutorService scheduler) {
 		this.scheduler = scheduler;
-	}
-
-	public void registeSender(MessageSender sender) {
-		this.sender = sender;
 	}
 
 	public MessageQueue getMessageQueue() {
@@ -84,5 +72,10 @@ public class Context {
 
 	public void stopClient() {
 		client.close();
+	}
+
+	public void clear() {
+		messageQueue.clear();
+		messageStore.clear();
 	}
 }

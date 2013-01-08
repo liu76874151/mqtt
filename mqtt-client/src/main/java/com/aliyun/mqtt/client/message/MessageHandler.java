@@ -22,10 +22,9 @@ public class MessageHandler {
 
 	public MessageHandler(Context context) {
 		this.context = context;
-		this.context.registeMessageHandler(this);
 	}
 
-	public void handle(ByteBuffer buffer) {
+	public ByteBuffer handle(ByteBuffer buffer) {
 		Message message = context.getParser().decode(buffer);
 		if (message != null) {
 			logger.info("Received a message of type "
@@ -59,7 +58,13 @@ public class MessageHandler {
 				logger.info("Handler not exist");
 				break;
 			}
+			if (buffer.position() > 0 && buffer.remaining() >= 2) {
+				/* if the buffer has another message */
+				return buffer.slice();
+			}
+			return null;
 		}
+		return null;
 	}
 
 	protected void handleConnAck(Message message) {
@@ -97,6 +102,10 @@ public class MessageHandler {
 	protected void handlePubRec(Message message) {
 		PubRecMessage m = (PubRecMessage) message;
 		context.getSender().sendQosAck("PUBLISH", m.getMessageID());
+
+		PubRelMessage pubRelMessage = new PubRelMessage();
+		pubRelMessage.setMessageID(m.getMessageID());
+		context.getSender().send(pubRelMessage);
 	}
 
 	protected void handlePubRel(Message message) {

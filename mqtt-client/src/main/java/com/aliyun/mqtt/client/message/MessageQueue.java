@@ -19,7 +19,7 @@ public class MessageQueue {
 
 	public ByteBuffer get() {
 		synchronized (messageQueue) {
-			if (messageQueue.size() > 0) {
+			if (!messageQueue.isEmpty()) {
 				return messageQueue.remove();
 			}
 			return null;

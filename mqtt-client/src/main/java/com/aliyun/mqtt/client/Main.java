@@ -12,6 +12,10 @@ public class Main {
 	public static void main(String[] args) throws InterruptedException {
 		Client client = new Client("127.0.0.1", 1883, "client2");
 		client.connect();
+		client.setDefaultPublishCallback(new AbstractPublishCallback() {
+			public void published(String topic, byte[] payload) {
+			}
+		});
 		client.subscribe("/topic", MQTT.QOS_ONCE,
 				new AbstractPublishCallback() {
 					public void published(String topic, byte[] payload) {
@@ -20,12 +24,12 @@ public class Main {
 					}
 				});
 
-		Thread.sleep(3000);
-		client.publish("/topic", "hello lijing".getBytes());
-		client.publish("/topic", "hello lijing1".getBytes());
-		client.publish("/topic", "hello lijing2".getBytes());
-		client.publish("/topic", "hello lijing3".getBytes());
-		client.publish("/topic", "hello lijing4".getBytes());
+		Thread.sleep(1000);
+		client.publish("/topic", "hello lijing".getBytes(), MQTT.QOS_ONCE);
+		client.publish("/topic", "hello lijing1".getBytes(), MQTT.QOS_ONCE);
+		client.publish("/topic", "hello lijing2".getBytes(), MQTT.QOS_ONCE);
+		client.publish("/topic", "hello lijing3".getBytes(), MQTT.QOS_ONCE);
+		client.publish("/topic", "hello lijing4".getBytes(), MQTT.QOS_ONCE);
 	}
 
 }

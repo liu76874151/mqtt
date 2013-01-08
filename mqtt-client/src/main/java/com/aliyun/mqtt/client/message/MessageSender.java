@@ -22,7 +22,8 @@ import com.aliyun.mqtt.core.message.PublishMessage;
  */
 public class MessageSender {
 
-	private static final long SCHEDULE_DELAY = 3 * 1000L;
+	private static final long SCHEDULE_DELAY = 10 * 1000L;
+	private static final int SCHEDULE_RETRY = 3;
 
 	private Context context;
 
@@ -33,7 +34,6 @@ public class MessageSender {
 
 	public MessageSender(Context context) {
 		this.context = context;
-		this.context.registeSender(this);
 	}
 
 	public void send(Message message) {
@@ -52,7 +52,7 @@ public class MessageSender {
 		String name = message.getClass().getSimpleName().replace("Message", "")
 				.toUpperCase();
 		final int t = tryTimes + 1;
-		if (t > 3) {
+		if (t > SCHEDULE_RETRY) {
 			if (message instanceof PubRecMessage) {
 				scheduledFutures.remove("ONPUBLISH_" + message.getMessageID());
 			}
@@ -72,7 +72,7 @@ public class MessageSender {
 
 	private void sendQos2(final MessageIDMessage message, int tryTimes) {
 		final int t = tryTimes + 1;
-		if (t > 3) {
+		if (t > SCHEDULE_RETRY) {
 			scheduledFutures.remove("PUBLISH_" + message.getMessageID());
 			context.getMessageStore().getQos2(
 					"PUBLISH_" + message.getMessageID());

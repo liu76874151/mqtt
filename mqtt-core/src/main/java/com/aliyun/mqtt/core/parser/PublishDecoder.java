@@ -28,7 +28,6 @@ public class PublishDecoder extends Decoder {
 		byte[] payload = new byte[payloadLength];
 		buffer.get(payload);
 		message.setPayload(payload);
-		buffer.clear();
 		return message;
 	}
 

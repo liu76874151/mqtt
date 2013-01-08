@@ -16,9 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.aliyun.mqtt.client.callback.IPublishCallback;
-import com.aliyun.mqtt.client.message.MessageHandler;
-import com.aliyun.mqtt.client.message.MessageQueue;
-import com.aliyun.mqtt.client.message.MessageSender;
 import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.ConnAckMessage;
@@ -55,8 +52,10 @@ public class Client {
 
 	private static Logger logger = Logger.getLogger("mqtt-client");
 
+	/* CONNECT_TIMEOUT */
 	private static final long CONNECT_TIMEOUT = 10 * 1000L;
-	private static final int KEEPALIVE_SECS = 10;
+	/* KEEPALIVE_SECS */
+	private static final int KEEPALIVE_SECS = 60;
 
 	private SocketChannel socketChannel;
 	private Selector selector = null;
@@ -68,9 +67,6 @@ public class Client {
 	private IPublishCallback defaultPublishCallback;
 
 	private MQTTParser parser = null;
-	private MessageQueue messageQueue = null;
-	private MessageHandler handler = null;
-	private MessageSender sender = null;
 
 	private CountDownLatch connectBarrier;
 	private ScheduledExecutorService scheduler;
@@ -112,10 +108,6 @@ public class Client {
 		parser.registeDecoder(new PubCompDecoder());
 
 		context.registeParser(parser);
-		messageQueue = new MessageQueue();
-		context.registeMessageQueue(messageQueue);
-		handler = new MessageHandler(context);
-		sender = new MessageSender(context);
 		scheduler = Executors.newScheduledThreadPool(1);
 		context.registeScheduler(scheduler);
 	}
@@ -197,12 +189,11 @@ public class Client {
 		if (heartbeatHandler != null) {
 			heartbeatHandler.cancel(false);
 		}
-		messageQueue.clear();
 		registedCallbacks.clear();
 		if (!scheduler.isShutdown()) {
 			scheduler.shutdown();
 		}
-		context.getMessageStore().clear();
+		context.clear();
 	}
 
 	private void socketConnet() {
@@ -270,7 +261,7 @@ public class Client {
 	}
 
 	public void publish(String topic, byte[] payload, byte qos) {
-		publish(topic, payload, MQTT.QOS_MOST_ONCE, false);
+		publish(topic, payload, qos, false);
 	}
 
 	public void publish(String topic, byte[] payload, byte qos, boolean retain) {
@@ -314,19 +305,7 @@ public class Client {
 	}
 
 	protected void addSendMessage(Message message) {
-		sender.send(message);
-	}
-
-	public MessageQueue getMessageQueue() {
-		return messageQueue;
-	}
-
-	public MessageHandler getMessageHandler() {
-		return handler;
-	}
-
-	public MQTTParser getMQTTParser() {
-		return parser;
+		context.getSender().send(message);
 	}
 
 	public Context getContext() {
