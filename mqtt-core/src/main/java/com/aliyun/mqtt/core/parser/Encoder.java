@@ -45,16 +45,29 @@ public abstract class Encoder {
 	}
 
 	protected void encodeLength(int length, OutputStream out)
-			throws IOException, MQTTException {
+			throws IOException {
 		out.write((byte) ((length & 0xFF00) >> 8)); // msb
 		out.write((byte) (length & 0x00FF)); // lsb
 	}
 
+	protected void encodeLength(int length, ByteBuffer buffer)
+			throws IOException {
+		buffer.put((byte) ((length & 0xFF00) >> 8)); // msb
+		buffer.put((byte) (length & 0x00FF)); // lsb
+	}
+
 	protected void encodeString(String string, OutputStream out)
-			throws IOException, MQTTException {
+			throws IOException {
 		byte[] bs = string.getBytes("UTF-8");
 		encodeLength(bs.length, out);
 		out.write(bs);
+	}
+
+	protected void encodeString(String string, ByteBuffer buffer)
+			throws IOException {
+		byte[] bs = string.getBytes("UTF-8");
+		encodeLength(bs.length, buffer);
+		buffer.put(bs);
 	}
 
 	public abstract ByteBuffer encode(Message message);

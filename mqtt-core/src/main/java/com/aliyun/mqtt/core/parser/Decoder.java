@@ -1,5 +1,6 @@
 package com.aliyun.mqtt.core.parser;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import com.aliyun.mqtt.core.MQTTException;
@@ -47,6 +48,21 @@ public abstract class Decoder {
 		int msb = buffer.get() & 0xFF;
 		int lsb = buffer.get() & 0xFF;
 		return (msb << 8) | lsb;
+	}
+	
+	protected String decodeString(ByteBuffer buffer) {
+		int length = decodeLength(buffer);
+		if(length > buffer.remaining()) {
+			throw new MQTTException("Protocol error - error data");
+		}
+		byte[] str = new byte[length];
+		buffer.get(str);
+		try {
+			String result = new String(str, "UTF-8");
+			return result;
+		} catch (UnsupportedEncodingException e) {
+			throw new MQTTException(e);
+		}
 	}
 
 	public abstract Message decode(ByteBuffer buffer);

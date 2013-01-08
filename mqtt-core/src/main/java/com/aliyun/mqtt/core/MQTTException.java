@@ -5,6 +5,11 @@ package com.aliyun.mqtt.core;
  * this template use File | Settings | File Templates.
  */
 public class MQTTException extends RuntimeException {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public MQTTException(String message) {
 		super(message);
 	}

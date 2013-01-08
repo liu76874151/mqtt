@@ -63,7 +63,7 @@ public class ConnectEncoder extends Encoder {
 			/* remain length */
 			encodeRemainLength(message.getRemainLength(), out);
 			/* data */
-			out.write(data.toByteArray());
+			data.writeTo(out);
 			return ByteBuffer.wrap(out.toByteArray());
 		} catch (Throwable throwable) {
 			throwable.printStackTrace();

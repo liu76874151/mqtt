@@ -12,7 +12,6 @@ import com.aliyun.mqtt.core.message.PublishMessage;
  */
 public abstract class AbstractPublishCallback implements IPublishCallback {
 
-    @Override
     public void callback(Message message) {
         PublishMessage publishMessage = (PublishMessage)message;
         published(publishMessage.getTopic(), publishMessage.getPayload());

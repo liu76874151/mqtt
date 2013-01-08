@@ -17,7 +17,7 @@ import com.aliyun.mqtt.core.MQTTException;
  */
 public class NioWorker implements Runnable {
 
-	private Logger logger = Logger.getLogger("mqtt-client");
+	private static Logger logger = Logger.getLogger("mqtt-client");
 
 	private SocketChannel socketChannel = null;
 	private Selector selector = null;

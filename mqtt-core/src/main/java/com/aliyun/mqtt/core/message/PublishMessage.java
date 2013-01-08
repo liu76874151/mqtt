@@ -1,5 +1,7 @@
 package com.aliyun.mqtt.core.message;
 
+import com.aliyun.mqtt.core.MQTT;
+
 /**
  * Created with IntelliJ IDEA.
  * User: lijing
@@ -9,6 +11,10 @@ package com.aliyun.mqtt.core.message;
  */
 public class PublishMessage extends MessageIDMessage {
 
+	public PublishMessage() {
+		this.type = MQTT.MESSAGE_TYPE_PUBLISH;
+	}
+	
     private String topic;
 
     private byte[] payload;
