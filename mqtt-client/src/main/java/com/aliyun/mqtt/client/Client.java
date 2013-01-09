@@ -15,7 +15,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import com.aliyun.mqtt.client.callback.AbstractPublishedCallback;
 import com.aliyun.mqtt.client.callback.Callback;
 import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.MQTTException;
@@ -65,7 +64,7 @@ public class Client {
 	private String clientID;
 
 	private Map<String, Callback> registedCallbacks = new HashMap<String, Callback>();
-	private AbstractPublishedCallback defaultPublishCallback;
+	private Callback defaultPublishedCallback;
 
 	private MQTTParser parser = null;
 
@@ -170,8 +169,8 @@ public class Client {
 		this.heartbeat();
 	}
 
-	public void setDefaultPublishCallback(AbstractPublishedCallback callback) {
-		this.defaultPublishCallback = callback;
+	public void setDefaultPublishedCallback(Callback callback) {
+		this.defaultPublishedCallback = callback;
 	}
 
 	public void disconnect() {
@@ -283,8 +282,8 @@ public class Client {
 				+ publishMessage.getTopic());
 		String topic = publishMessage.getTopic();
 		Callback callback = registedCallbacks.get("ONPUBLUSH_" + topic);
-		if (callback == null || !(callback instanceof AbstractPublishedCallback)) {
-			callback = defaultPublishCallback;
+		if (callback == null) {
+			callback = defaultPublishedCallback;
 		}
 		if (callback != null) {
 			callback.callback(publishMessage);

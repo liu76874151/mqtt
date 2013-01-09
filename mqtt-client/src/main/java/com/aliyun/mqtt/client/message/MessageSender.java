@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.aliyun.mqtt.client.Context;
+import com.aliyun.mqtt.client.callback.Callback;
 import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.Message;
@@ -35,8 +36,12 @@ public class MessageSender {
 	public MessageSender(Context context) {
 		this.context = context;
 	}
-
+	
 	public void send(Message message) {
+		send(message, null);
+	}
+
+	public void send(Message message, Callback callback) {
 		if (message.getQos() == MQTT.QOS_LEAST_ONCE) {
 			sendQos1((MessageIDMessage) message, 0);
 		} else if (message.getQos() == MQTT.QOS_ONCE
