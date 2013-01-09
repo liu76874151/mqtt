@@ -36,7 +36,7 @@ public class NioWorker implements Runnable {
 				if (!socketChannel.isOpen()) {
 					break;
 				}
-				if (selector.select(0) > 0) {
+				if (selector.select(30) > 0) {
 					doSelector();
 				}
 			}
@@ -67,6 +67,7 @@ public class NioWorker implements Runnable {
 	}
 
 	private void readResponse(SocketChannel channel) throws IOException {
+		/* to be optimized */
 		ByteBuffer byteBuffer = ByteBuffer.wrap(array);
 		int count = channel.read(byteBuffer);
 		if (count > 0) {
@@ -75,13 +76,13 @@ public class NioWorker implements Runnable {
 				byteBuffer.flip();
 				out.write(byteBuffer.array(), 0, byteBuffer.remaining());
 				byteBuffer.clear();
+				if (count < array.length) {
+					break;
+				}
 				count = channel.read(byteBuffer);
 			}
-			ByteBuffer returnBuffer = ByteBuffer.allocate(out.size());
-			returnBuffer.clear();
-			returnBuffer.put(out.toByteArray());
+			ByteBuffer returnBuffer = ByteBuffer.wrap(out.toByteArray());
 			out.close();
-			returnBuffer.flip();
 			try {
 				ByteBuffer b = context.getMessageHandler().handle(returnBuffer);
 				while (b != null && b.remaining() >= 2) {
