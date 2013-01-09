@@ -15,7 +15,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import com.aliyun.mqtt.client.callback.IPublishCallback;
+import com.aliyun.mqtt.client.callback.AbstractPublishedCallback;
+import com.aliyun.mqtt.client.callback.Callback;
 import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.ConnAckMessage;
@@ -63,8 +64,8 @@ public class Client {
 	private int port = 1883;
 	private String clientID;
 
-	private Map<String, IPublishCallback> registedCallbacks = new HashMap<String, IPublishCallback>();
-	private IPublishCallback defaultPublishCallback;
+	private Map<String, Callback> registedCallbacks = new HashMap<String, Callback>();
+	private AbstractPublishedCallback defaultPublishCallback;
 
 	private MQTTParser parser = null;
 
@@ -169,7 +170,7 @@ public class Client {
 		this.heartbeat();
 	}
 
-	public void setDefaultPublishCallback(IPublishCallback callback) {
+	public void setDefaultPublishCallback(AbstractPublishedCallback callback) {
 		this.defaultPublishCallback = callback;
 	}
 
@@ -222,7 +223,7 @@ public class Client {
 		}
 	}
 
-	public void registeCallback(String name, IPublishCallback callback) {
+	public void registeCallback(String name, Callback callback) {
 		this.registedCallbacks.put(name, callback);
 	}
 
@@ -240,13 +241,13 @@ public class Client {
 		subscribe(topic, qos, null);
 	}
 
-	public void subscribe(String topic, byte qos, IPublishCallback callback) {
+	public void subscribe(String topic, byte qos, Callback callback) {
 		SubscribeMessage message = new SubscribeMessage();
 		message.setMessageID(context.nextMessageID());
 		message.addTopic(topic, qos);
 		addSendMessage(message);
 		if (callback != null) {
-			registeCallback(topic, callback);
+			registeCallback("ONPUBLUSH_" + topic, callback);
 		}
 		this.heartbeat();
 	}
@@ -281,8 +282,8 @@ public class Client {
 				+ publishMessage.getQos() + "\ntopic="
 				+ publishMessage.getTopic());
 		String topic = publishMessage.getTopic();
-		IPublishCallback callback = registedCallbacks.get(topic);
-		if (callback == null) {
+		Callback callback = registedCallbacks.get("ONPUBLUSH_" + topic);
+		if (callback == null || !(callback instanceof AbstractPublishedCallback)) {
 			callback = defaultPublishCallback;
 		}
 		if (callback != null) {

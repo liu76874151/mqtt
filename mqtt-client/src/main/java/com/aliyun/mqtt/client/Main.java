@@ -1,6 +1,6 @@
 package com.aliyun.mqtt.client;
 
-import com.aliyun.mqtt.client.callback.AbstractPublishCallback;
+import com.aliyun.mqtt.client.callback.AbstractPublishedCallback;
 import com.aliyun.mqtt.core.MQTT;
 
 /**
@@ -12,12 +12,12 @@ public class Main {
 	public static void main(String[] args) throws InterruptedException {
 		Client client = new Client("127.0.0.1", 1883, "client2");
 		client.connect();
-		client.setDefaultPublishCallback(new AbstractPublishCallback() {
+		client.setDefaultPublishCallback(new AbstractPublishedCallback() {
 			public void published(String topic, byte[] payload) {
 			}
 		});
 		client.subscribe("/topic", MQTT.QOS_ONCE,
-				new AbstractPublishCallback() {
+				new AbstractPublishedCallback() {
 					public void published(String topic, byte[] payload) {
 						System.out.println(topic);
 						System.out.println(new String(payload));

@@ -54,9 +54,10 @@ public class MessageSender {
 		final int t = tryTimes + 1;
 		if (t > SCHEDULE_RETRY) {
 			if (message instanceof PubRecMessage) {
-				scheduledFutures.remove("ONPUBLISH_" + message.getMessageID());
+				context.getMessageStore().getQos2(
+						"ONPUBLISH_" + message.getMessageID());
 			}
-			scheduledFutures.remove("PUBLISH_" + message.getMessageID());
+			scheduledFutures.remove(name + "_" + message.getMessageID());
 			return;
 		}
 		ScheduledFuture<?> future = context.getScheduler().schedule(
@@ -75,7 +76,7 @@ public class MessageSender {
 		if (t > SCHEDULE_RETRY) {
 			scheduledFutures.remove("PUBLISH_" + message.getMessageID());
 			context.getMessageStore().getQos2(
-					"PUBLISH_" + message.getMessageID());
+					"ONPUBLISH_" + message.getMessageID());
 			return;
 		}
 		context.getMessageStore().qos2("PUBLISH_" + message.getMessageID(),
