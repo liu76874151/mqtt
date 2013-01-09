@@ -1,11 +1,11 @@
 package com.aliyun.mqtt.nio;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.logging.Logger;
 
 import com.aliyun.mqtt.client.Context;
 import com.aliyun.mqtt.core.MQTTException;
@@ -15,13 +15,15 @@ import com.aliyun.mqtt.core.MQTTException;
  * this template use File | Settings | File Templates.
  */
 public class NioWorker implements Runnable {
+	
+	private static Logger logger = Logger.getLogger("mqtt-client");
 
 	private SocketChannel socketChannel = null;
 	private Selector selector = null;
 
 	private Context context = null;
 
-	private byte[] array = new byte[1024];
+	private ByteBuffer buffer = null;
 
 	public NioWorker(SocketChannel socketChannel, Selector selector,
 			Context context) {
@@ -68,33 +70,41 @@ public class NioWorker implements Runnable {
 
 	private void readResponse(SocketChannel channel) throws IOException {
 		/* to be optimized */
-		ByteBuffer byteBuffer = ByteBuffer.wrap(array);
+		ByteBuffer byteBuffer = null;
+		int bufferSize = 1024;
+		if (this.buffer != null && this.buffer.remaining() > 0) {
+			byteBuffer = ByteBuffer.allocate(this.buffer.remaining() + bufferSize);
+			byteBuffer.put(this.buffer.array());
+		} else {
+			byteBuffer = ByteBuffer.allocate(bufferSize);
+		}
 		int count = channel.read(byteBuffer);
 		if (count > 0) {
-			ByteArrayOutputStream out = new ByteArrayOutputStream(count);
-			while (count > 0) {
-				byteBuffer.flip();
-				out.write(byteBuffer.array(), 0, byteBuffer.remaining());
-				byteBuffer.clear();
-				if (count < array.length) {
-					break;
-				}
-				count = channel.read(byteBuffer);
-			}
-			ByteBuffer returnBuffer = ByteBuffer.wrap(out.toByteArray());
-			out.close();
+			byteBuffer.flip();
 			try {
-				ByteBuffer b = context.getMessageHandler().handle(returnBuffer);
-				while (b != null && b.remaining() >= 2) {
-					b = context.getMessageHandler().handle(b);
+				for (;;) {
+					if (context.getParser().decodable(byteBuffer)) {  /* ok */
+						context.getMessageHandler().handle(byteBuffer);
+					} else { /* need data */
+						logger.warning("data not ready, waiting");
+						break;
+					}
+					if (byteBuffer.remaining() < 2) {
+						break;
+					}
+				}
+				if (byteBuffer.remaining() == 0) {
+					this.buffer = null;
+				} else {
+					byte[] buf = new byte[byteBuffer.remaining()];
+					byteBuffer.get(buf);
+					this.buffer = ByteBuffer.wrap(buf);
 				}
 			} catch (MQTTException e) {
 				e.printStackTrace();
+				this.buffer = null;
 			}
-
-		} else if (count < 0) {
-			stopClient();
-		}
+		} 
 	}
 
 	public void sendRequest(SocketChannel channel) throws IOException {

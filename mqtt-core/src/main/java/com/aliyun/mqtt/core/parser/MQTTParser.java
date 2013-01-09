@@ -40,17 +40,43 @@ public class MQTTParser {
 	}
 
 	public Message decode(ByteBuffer buffer) {
+		int pos = buffer.position();
 		String name = MQTT.TYPES.get((byte) ((buffer.get() & 0xF0) >> 4));
 		if (name == null) {
 			throw new MQTTException("Message type error");
 		}
-		buffer.rewind();
+		buffer.position(pos);
 		Decoder decoder = decoders.get(name);
 		if (decoder == null) {
 			throw new MQTTException("Decoder of name '" + name
 					+ "' not registed");
 		}
 		return decoder.decode(buffer);
+	}
+	
+	/**
+	 * check if the buffer decodable
+	 * @param buffer
+	 * @return (0:ok, 1:need data, 2:error data)
+	 */
+	public boolean decodable(ByteBuffer buffer) {
+		int pos = buffer.position();
+		if (buffer.remaining() < 2) {
+			return false;
+		}
+		boolean containsKey = MQTT.TYPES.containsKey((byte) ((buffer.get() & 0xF0) >> 4));
+		if (!containsKey) {
+			throw new MQTTException("Message type error");
+		}
+		int remainingLength = Decoder.decodeRemainingLenght(buffer);
+		if (remainingLength < 0) {
+			throw new MQTTException("Error remaining length");
+		}
+		if (buffer.remaining() < remainingLength) {
+			return false;
+		}
+		buffer.position(pos);
+		return true;
 	}
 
 }

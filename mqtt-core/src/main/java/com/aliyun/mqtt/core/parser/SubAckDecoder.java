@@ -11,7 +11,12 @@ public class SubAckDecoder extends Decoder {
 	public Message decode(ByteBuffer buffer) {
 		SubAckMessage message = new SubAckMessage();
 		decodeHeader(message, buffer);
+		int oldpos = buffer.position();
 		message.setMessageID(decodeLength(buffer));
+		int pos = buffer.position();
+		for (int i = pos - oldpos; i < message.getRemainLength(); i ++) {
+			message.addQos(buffer.get());
+		}
 		return message;
 	}
 

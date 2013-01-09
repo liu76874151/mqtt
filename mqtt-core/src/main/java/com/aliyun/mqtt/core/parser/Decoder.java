@@ -21,12 +21,9 @@ public abstract class Decoder {
 		message.setQos((byte) ((fixedHeader & 0x06) >> 1));
 		message.setRetain((fixedHeader & 0x01) != 0);
 		message.setRemainLength(decodeRemainingLenght(buffer));
-		if (message.getRemainLength() == -1) {
-			throw new MQTTException("Protocol error - no data");
-		}
 	}
 
-	protected int decodeRemainingLenght(ByteBuffer buffer) {
+	protected static int decodeRemainingLenght(ByteBuffer buffer) {
 		int multiplier = 1;
 		int value = 0;
 		byte digit;
