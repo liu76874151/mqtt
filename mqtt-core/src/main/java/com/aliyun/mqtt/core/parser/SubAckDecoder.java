@@ -14,7 +14,7 @@ public class SubAckDecoder extends Decoder {
 		int oldpos = buffer.position();
 		message.setMessageID(decodeLength(buffer));
 		int pos = buffer.position();
-		for (int i = pos - oldpos; i < message.getRemainLength(); i ++) {
+		for (int i = pos - oldpos; i < message.getRemainLength(); i++) {
 			message.addQos(buffer.get());
 		}
 		return message;

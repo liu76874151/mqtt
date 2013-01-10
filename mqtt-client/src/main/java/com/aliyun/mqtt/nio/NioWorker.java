@@ -15,7 +15,7 @@ import com.aliyun.mqtt.core.MQTTException;
  * this template use File | Settings | File Templates.
  */
 public class NioWorker implements Runnable {
-	
+
 	private static Logger logger = Logger.getLogger("mqtt-client");
 
 	private SocketChannel socketChannel = null;
@@ -73,7 +73,8 @@ public class NioWorker implements Runnable {
 		ByteBuffer byteBuffer = null;
 		int bufferSize = 1024;
 		if (this.buffer != null && this.buffer.remaining() > 0) {
-			byteBuffer = ByteBuffer.allocate(this.buffer.remaining() + bufferSize);
+			byteBuffer = ByteBuffer.allocate(this.buffer.remaining()
+					+ bufferSize);
 			byteBuffer.put(this.buffer.array());
 		} else {
 			byteBuffer = ByteBuffer.allocate(bufferSize);
@@ -83,7 +84,7 @@ public class NioWorker implements Runnable {
 			byteBuffer.flip();
 			try {
 				for (;;) {
-					if (context.getParser().decodable(byteBuffer)) {  /* ok */
+					if (context.getParser().decodable(byteBuffer)) { /* ok */
 						context.getMessageHandler().handle(byteBuffer);
 					} else { /* need data */
 						logger.warning("data not ready, waiting");
@@ -104,7 +105,7 @@ public class NioWorker implements Runnable {
 				e.printStackTrace();
 				this.buffer = null;
 			}
-		} 
+		}
 	}
 
 	public void sendRequest(SocketChannel channel) throws IOException {

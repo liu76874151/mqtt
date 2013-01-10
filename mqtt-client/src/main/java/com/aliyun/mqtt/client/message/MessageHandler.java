@@ -67,21 +67,24 @@ public class MessageHandler {
 
 	protected void handleSubAck(Message message) {
 		SubAckMessage m = (SubAckMessage) message;
-		context.getSender().sendQosAck("SUBSCRIBE", m.getMessageID());
-		context.getClient().subAckCallback(m);
+		context.getSender().sendQosAck(
+				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_SUBSCRIBE) + m.getMessageID());
+		context.getClient().sendQosCallback(
+				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_SUBSCRIBE) + m.getMessageID(),
+				m);
 	}
 
 	protected void handlePublish(Message message) {
 		PublishMessage m = (PublishMessage) message;
 		if (message.getQos() == MQTT.QOS_MOST_ONCE) {
-			context.getClient().onPublished(m);
+			context.getClient().onMessage(m);
 		} else if (message.getQos() == MQTT.QOS_LEAST_ONCE) {
-			context.getClient().onPublished(m);
+			context.getClient().onMessage(m);
 			PubAckMessage ack = new PubAckMessage();
 			ack.setMessageID(m.getMessageID());
 			context.getSender().send(ack);
 		} else if (message.getQos() == MQTT.QOS_ONCE) {
-			context.getMessageStore().qos2("ONPUBLISH_" + m.getMessageID(), m);
+			context.getMessageStore().qos2("" + m.getMessageID(), m);
 			PubRecMessage rec = new PubRecMessage();
 			rec.setMessageID(m.getMessageID());
 			context.getSender().send(rec);
@@ -90,12 +93,18 @@ public class MessageHandler {
 
 	protected void handlePubAck(Message message) {
 		PubAckMessage m = (PubAckMessage) message;
-		context.getSender().sendQosAck("PUBLISH", m.getMessageID());
+		context.getSender().sendQosAck(
+				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH) + m.getMessageID());
+		context.getClient()
+				.sendQosCallback(
+						MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH)
+								+ m.getMessageID(), m);
 	}
 
 	protected void handlePubRec(Message message) {
 		PubRecMessage m = (PubRecMessage) message;
-		context.getSender().sendQosAck("PUBLISH", m.getMessageID());
+		context.getSender().sendQosAck(
+				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH) + m.getMessageID());
 
 		PubRelMessage pubRelMessage = new PubRelMessage();
 		pubRelMessage.setMessageID(m.getMessageID());
@@ -104,13 +113,14 @@ public class MessageHandler {
 
 	protected void handlePubRel(Message message) {
 		PubRelMessage m = (PubRelMessage) message;
-		context.getSender().sendQosAck("PUBREC", m.getMessageID());
+		context.getSender().sendQosAck(
+				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBREC) + m.getMessageID());
 
 		/* publish to Application */
 		PublishMessage publishMessage = (PublishMessage) context
-				.getMessageStore().getQos2("ONPUBLISH_" + m.getMessageID());
+				.getMessageStore().getQos2("" + m.getMessageID());
 		if (publishMessage != null) {
-			context.getClient().onPublished(publishMessage);
+			context.getClient().onMessage(publishMessage);
 		}
 
 		/* send comp message */
@@ -121,7 +131,12 @@ public class MessageHandler {
 
 	protected void handlePubComp(Message message) {
 		PubCompMessage m = (PubCompMessage) message;
-		context.getSender().sendQosAck("PUBREL", m.getMessageID());
+		context.getSender().sendQosAck(
+				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBREL) + m.getMessageID());
+		context.getClient()
+				.sendQosCallback(
+						MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH)
+								+ m.getMessageID(), m);
 	}
 
 	protected void handlePingResp(Message message) {

@@ -21,9 +21,10 @@ import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.ConnAckMessage;
 import com.aliyun.mqtt.core.message.ConnectMessage;
 import com.aliyun.mqtt.core.message.Message;
+import com.aliyun.mqtt.core.message.MessageIDMessage;
 import com.aliyun.mqtt.core.message.PingReqMessage;
+import com.aliyun.mqtt.core.message.PubRelMessage;
 import com.aliyun.mqtt.core.message.PublishMessage;
-import com.aliyun.mqtt.core.message.SubAckMessage;
 import com.aliyun.mqtt.core.message.SubscribeMessage;
 import com.aliyun.mqtt.core.parser.ConnAckDecoder;
 import com.aliyun.mqtt.core.parser.ConnectEncoder;
@@ -64,7 +65,7 @@ public class Client {
 	private String clientID;
 
 	private Map<String, Callback> registedCallbacks = new HashMap<String, Callback>();
-	private Callback defaultPublishedCallback;
+	private Callback defaultOnMessageCallback;
 
 	private MQTTParser parser = null;
 
@@ -169,8 +170,8 @@ public class Client {
 		this.heartbeat();
 	}
 
-	public void setDefaultPublishedCallback(Callback callback) {
-		this.defaultPublishedCallback = callback;
+	public void setDefaultOnMessageCallback(Callback callback) {
+		this.defaultOnMessageCallback = callback;
 	}
 
 	public void disconnect() {
@@ -246,14 +247,11 @@ public class Client {
 		message.addTopic(topic, qos);
 		addSendMessage(message);
 		if (callback != null) {
-			registeCallback("ONPUBLUSH_" + topic, callback);
+			registeCallback(
+					MQTT.TYPES.get(message.getType()) + message.getMessageID(),
+					callback);
 		}
 		this.heartbeat();
-	}
-
-	public void subAckCallback(SubAckMessage message) {
-		logger.info("subAckCallback invoked, messageID="
-				+ message.getMessageID());
 	}
 
 	public void publish(String topic, byte[] payload) {
@@ -265,6 +263,11 @@ public class Client {
 	}
 
 	public void publish(String topic, byte[] payload, byte qos, boolean retain) {
+		publish(topic, payload, qos, retain, null);
+	}
+
+	public void publish(String topic, byte[] payload, byte qos, boolean retain,
+			Callback callback) {
 		PublishMessage publishMessage = new PublishMessage();
 		publishMessage.setQos(qos);
 		publishMessage.setRetain(retain);
@@ -272,18 +275,50 @@ public class Client {
 		publishMessage.setPayload(payload);
 		publishMessage.setMessageID(context.nextMessageID());
 		addSendMessage(publishMessage);
+		if (callback != null) {
+			if (qos == MQTT.QOS_LEAST_ONCE || qos == MQTT.QOS_ONCE) {
+				registeCallback(MQTT.TYPES.get(publishMessage.getType())
+						+ publishMessage.getMessageID(), callback);
+			} else {
+				callback.callback(publishMessage);
+			}
+		}
 		this.heartbeat();
 	}
 
-	public void onPublished(PublishMessage publishMessage) {
+	public void sendQosCallback(String name, MessageIDMessage message) {
+		logger.info(message.getClass().getSimpleName()
+				+ " callback invoked, messageID=" + message.getMessageID());
+		Callback callback = registedCallbacks.remove(name);
+		if (callback != null) {
+			callback.callback(message);
+		}
+	}
+
+	public void sendQosFailCallback(MessageIDMessage message) {
+		logger.info(message.getClass().getSimpleName()
+				+ " fail callback invoked, messageID=" + message.getMessageID());
+		byte type = message.getType();
+		if (message instanceof PubRelMessage) {
+			/* publish fail */
+			type = MQTT.MESSAGE_TYPE_PUBLISH;
+		}
+		Callback callback = registedCallbacks.remove(MQTT.TYPES.get(type)
+				+ message.getMessageID());
+		if (callback != null) {
+			callback.callback(null);
+		}
+	}
+
+	public void onMessage(PublishMessage publishMessage) {
 		logger.info("Received a publish message : messageID="
 				+ publishMessage.getMessageID() + "\nqos="
 				+ publishMessage.getQos() + "\ntopic="
 				+ publishMessage.getTopic());
 		String topic = publishMessage.getTopic();
-		Callback callback = registedCallbacks.get("ONPUBLUSH_" + topic);
+		Callback callback = registedCallbacks.get("ONMESSAGE_" + topic);
 		if (callback == null) {
-			callback = defaultPublishedCallback;
+			callback = defaultOnMessageCallback;
 		}
 		if (callback != null) {
 			callback.callback(publishMessage);

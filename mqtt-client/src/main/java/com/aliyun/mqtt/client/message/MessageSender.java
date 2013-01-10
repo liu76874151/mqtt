@@ -23,7 +23,7 @@ import com.aliyun.mqtt.core.message.PublishMessage;
  */
 public class MessageSender {
 
-	private static final long SCHEDULE_DELAY = 10 * 1000L;
+	private static final long SCHEDULE_DELAY = 3 * 1000L;
 	private static final int SCHEDULE_RETRY = 3;
 
 	private Context context;
@@ -36,7 +36,7 @@ public class MessageSender {
 	public MessageSender(Context context) {
 		this.context = context;
 	}
-	
+
 	public void send(Message message) {
 		send(message, null);
 	}
@@ -54,15 +54,14 @@ public class MessageSender {
 	}
 
 	private void sendQos1(final MessageIDMessage message, int tryTimes) {
-		String name = message.getClass().getSimpleName().replace("Message", "")
-				.toUpperCase();
+		String name = MQTT.TYPES.get(message.getType());
 		final int t = tryTimes + 1;
 		if (t > SCHEDULE_RETRY) {
 			if (message instanceof PubRecMessage) {
-				context.getMessageStore().getQos2(
-						"ONPUBLISH_" + message.getMessageID());
+				context.getMessageStore().getQos2("" + message.getMessageID());
 			}
-			scheduledFutures.remove(name + "_" + message.getMessageID());
+			scheduledFutures.remove(name + message.getMessageID());
+			context.getClient().sendQosFailCallback(message);
 			return;
 		}
 		ScheduledFuture<?> future = context.getScheduler().schedule(
@@ -72,20 +71,19 @@ public class MessageSender {
 						sendQos1(message, t);
 					}
 				}, SCHEDULE_DELAY, TimeUnit.MILLISECONDS);
-		scheduledFutures.put(name + "_" + message.getMessageID(), future);
+		scheduledFutures.put(name + message.getMessageID(), future);
 		send0(message);
 	}
 
 	private void sendQos2(final MessageIDMessage message, int tryTimes) {
+		String name = MQTT.TYPES.get(message.getType());
 		final int t = tryTimes + 1;
 		if (t > SCHEDULE_RETRY) {
-			scheduledFutures.remove("PUBLISH_" + message.getMessageID());
-			context.getMessageStore().getQos2(
-					"ONPUBLISH_" + message.getMessageID());
+			context.getMessageStore().getQos2("" + message.getMessageID());
+			scheduledFutures.remove(name + message.getMessageID());
+			context.getClient().sendQosFailCallback(message);
 			return;
 		}
-		context.getMessageStore().qos2("PUBLISH_" + message.getMessageID(),
-				message);
 		ScheduledFuture<?> future = context.getScheduler().schedule(
 				new Runnable() {
 					public void run() {
@@ -93,13 +91,12 @@ public class MessageSender {
 						sendQos2(message, t);
 					}
 				}, SCHEDULE_DELAY, TimeUnit.MILLISECONDS);
-		scheduledFutures.put("PUBLISH_" + message.getMessageID(), future);
+		scheduledFutures.put(name + message.getMessageID(), future);
 		send0(message);
 	}
 
-	public void sendQosAck(String name, int messageID) {
-		ScheduledFuture<?> future = scheduledFutures.remove(name + "_"
-				+ messageID);
+	public void sendQosAck(String name) {
+		ScheduledFuture<?> future = scheduledFutures.remove(name);
 		if (future != null) {
 			future.cancel(false);
 		}

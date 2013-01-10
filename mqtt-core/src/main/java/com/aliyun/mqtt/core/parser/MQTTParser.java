@@ -53,18 +53,20 @@ public class MQTTParser {
 		}
 		return decoder.decode(buffer);
 	}
-	
+
 	/**
 	 * check if the buffer decodable
+	 * 
 	 * @param buffer
-	 * @return (0:ok, 1:need data, 2:error data)
+	 * @return boolean
 	 */
 	public boolean decodable(ByteBuffer buffer) {
 		int pos = buffer.position();
 		if (buffer.remaining() < 2) {
 			return false;
 		}
-		boolean containsKey = MQTT.TYPES.containsKey((byte) ((buffer.get() & 0xF0) >> 4));
+		boolean containsKey = MQTT.TYPES
+				.containsKey((byte) ((buffer.get() & 0xF0) >> 4));
 		if (!containsKey) {
 			throw new MQTTException("Message type error");
 		}
