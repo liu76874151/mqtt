@@ -105,6 +105,8 @@ public class NioWorker implements Runnable {
 				e.printStackTrace();
 				this.buffer = null;
 			}
+		} else if (count < 0) {
+			throw new IOException("Connection error");
 		}
 	}
 
