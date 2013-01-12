@@ -32,17 +32,17 @@ public class Main {
 		});
 
 		Thread.sleep(1000);
-		client.publish("/topic", "hello lijing".getBytes(), MQTT.QOS_ONCE,
-				false, new AbstractCallback() {
-					@Override
-					public void result(boolean result) {
-						System.out.println("publish result=" + result);
-					}
-				});
-		client.publish("/topic", "hello lijing1".getBytes(), MQTT.QOS_ONCE);
-		client.publish("/topic", "hello lijing2".getBytes(), MQTT.QOS_ONCE);
-		client.publish("/topic", "hello lijing3".getBytes(), MQTT.QOS_ONCE);
-		client.publish("/topic", "hello lijing4".getBytes(), MQTT.QOS_ONCE);
+//		client.publish("/topic", "hello lijing".getBytes(), MQTT.QOS_ONCE,
+//				false, new AbstractCallback() {
+//					@Override
+//					public void result(boolean result) {
+//						System.out.println("publish result=" + result);
+//					}
+//				});
+//		client.publish("/topic", "hello lijing1".getBytes(), MQTT.QOS_ONCE);
+//		client.publish("/topic", "hello lijing2".getBytes(), MQTT.QOS_ONCE);
+//		client.publish("/topic", "hello lijing3".getBytes(), MQTT.QOS_ONCE);
+//		client.publish("/topic", "hello lijing4".getBytes(), MQTT.QOS_ONCE);
 	}
 
 }

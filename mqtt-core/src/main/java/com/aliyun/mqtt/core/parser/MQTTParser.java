@@ -74,10 +74,10 @@ public class MQTTParser {
 		if (remainingLength < 0) {
 			throw new MQTTException("Error remaining length");
 		}
+		buffer.position(pos);
 		if (buffer.remaining() < remainingLength) {
 			return false;
 		}
-		buffer.position(pos);
 		return true;
 	}
 
