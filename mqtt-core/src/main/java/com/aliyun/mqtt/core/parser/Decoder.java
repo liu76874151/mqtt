@@ -23,7 +23,7 @@ public abstract class Decoder {
 		message.setRemainLength(decodeRemainingLenght(buffer));
 	}
 
-	protected static int decodeRemainingLenght(ByteBuffer buffer) {
+	protected int decodeRemainingLenght(ByteBuffer buffer) {
 		int multiplier = 1;
 		int value = 0;
 		byte digit;
@@ -63,4 +63,13 @@ public abstract class Decoder {
 	}
 
 	public abstract Message decode(ByteBuffer buffer);
+	
+	public boolean decodable(ByteBuffer buffer) {
+		int pos = buffer.position();
+		boolean result = doDecodable(buffer);
+		buffer.position(pos);
+		return result;
+	}
+	
+	public abstract boolean doDecodable(ByteBuffer buffer);
 }

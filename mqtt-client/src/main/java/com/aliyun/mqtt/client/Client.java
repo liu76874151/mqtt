@@ -179,7 +179,7 @@ public class Client {
 	}
 
 	public void close() {
-		if (socketChannel.isConnected()) {
+		if (socketChannel != null && socketChannel.isConnected()) {
 			try {
 				socketChannel.close();
 				logger.info("server_socket has disconnected");

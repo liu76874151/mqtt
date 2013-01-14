@@ -31,4 +31,16 @@ public class PublishDecoder extends Decoder {
 		return message;
 	}
 
+	@Override
+	public boolean doDecodable(ByteBuffer buffer) {
+		if (buffer.remaining() < 2) {
+			return false;
+		}
+		buffer.get();
+		int remainingLength = decodeRemainingLenght(buffer);
+		if (buffer.remaining() < remainingLength) {
+			return false;
+		}
+		return true;
+	}
 }

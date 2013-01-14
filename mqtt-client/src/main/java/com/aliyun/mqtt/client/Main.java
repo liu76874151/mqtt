@@ -32,6 +32,7 @@ public class Main {
 		});
 
 		Thread.sleep(1000);
+		
 //		client.publish("/topic", "hello lijing".getBytes(), MQTT.QOS_ONCE,
 //				false, new AbstractCallback() {
 //					@Override
