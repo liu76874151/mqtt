@@ -24,6 +24,8 @@ public class NioWorker implements Runnable {
 	private Context context = null;
 
 	private ByteBuffer buffer = null;
+	
+	private byte[] array = new byte[256];
 
 	public NioWorker(SocketChannel socketChannel, Selector selector,
 			Context context) {
@@ -71,13 +73,13 @@ public class NioWorker implements Runnable {
 	private void readResponse(SocketChannel channel) throws IOException {
 		/* to be optimized */
 		ByteBuffer byteBuffer = null;
-		int bufferSize = 1024;
 		if (this.buffer != null && this.buffer.remaining() > 0) {
+			int bufferSize = 1024;
 			byteBuffer = ByteBuffer.allocate(this.buffer.remaining()
 					+ bufferSize);
 			byteBuffer.put(this.buffer.array());
 		} else {
-			byteBuffer = ByteBuffer.allocate(bufferSize);
+			byteBuffer = ByteBuffer.wrap(array);
 		}
 		int count = channel.read(byteBuffer);
 		if (count > 0) {
@@ -94,7 +96,7 @@ public class NioWorker implements Runnable {
 						break;
 					}
 				}
-				if (byteBuffer.remaining() == 0) {
+				if (byteBuffer.remaining() <= 0) {
 					this.buffer = null;
 				} else {
 					byte[] buf = new byte[byteBuffer.remaining()];
