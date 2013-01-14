@@ -9,14 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>mqtt-client</artifactId>
+    <artifactId>mqtt-server</artifactId>
 
-    <dependencies>
+	<dependencies>
         <dependency>
             <groupId>com.aliyun.mqtt</groupId>
             <artifactId>mqtt-core</artifactId>
             <version>${pom.version}</version>
         </dependency>
     </dependencies>
-
+	
 </project>
