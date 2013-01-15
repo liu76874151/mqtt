@@ -19,10 +19,7 @@ public class MessageQueue {
 
 	public ByteBuffer get() {
 		synchronized (messageQueue) {
-			if (!messageQueue.isEmpty()) {
-				return messageQueue.remove();
-			}
-			return null;
+			return messageQueue.poll();
 		}
 	}
 
