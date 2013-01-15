@@ -49,6 +49,12 @@ public class ConnectEncoder extends Encoder {
 			/* variable part */
 			if (message.getClientID() != null) {
 				encodeString(message.getClientID(), data);
+				
+				if (message.isWillFlag()) {
+					encodeString(message.getWillTopic(), data);
+					encodeString(message.getWillMessage(), data);
+				}
+				
 				if (message.isHasUsername() && message.getUsername() != null) {
 					encodeString(message.getUsername(), data);
 				}

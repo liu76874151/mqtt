@@ -21,9 +21,14 @@ public class ConnectMessage extends Message {
 	private int keepAlive;
 
 	private String clientID;
+	
+	private String willTopic;
+	private String willMessage;
 
 	private String username;
 	private String password;
+	
+	private byte ack;
 
 	public boolean isHasUsername() {
 		return hasUsername;
@@ -89,6 +94,22 @@ public class ConnectMessage extends Message {
 		this.clientID = clientID;
 	}
 
+	public String getWillTopic() {
+		return willTopic;
+	}
+
+	public void setWillTopic(String willTopic) {
+		this.willTopic = willTopic;
+	}
+
+	public String getWillMessage() {
+		return willMessage;
+	}
+
+	public void setWillMessage(String willMessage) {
+		this.willMessage = willMessage;
+	}
+
 	public String getUsername() {
 		return username;
 	}
@@ -104,4 +125,13 @@ public class ConnectMessage extends Message {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
+	public byte getAck() {
+		return ack;
+	}
+
+	public void setAck(byte ack) {
+		this.ack = ack;
+	}
+	
 }

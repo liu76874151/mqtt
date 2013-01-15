@@ -56,7 +56,7 @@ public class Client {
 	/* CONNECT_TIMEOUT */
 	private static final long CONNECT_TIMEOUT = 10 * 1000L;
 	/* KEEPALIVE_SECS */
-	private static final int KEEPALIVE_SECS = 60;
+	private static final int KEEPALIVE_SECS = 6;
 
 	private SocketChannel socketChannel;
 	private Selector selector = null;

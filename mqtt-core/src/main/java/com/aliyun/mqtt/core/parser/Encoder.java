@@ -58,6 +58,10 @@ public abstract class Encoder {
 
 	protected void encodeString(String string, OutputStream out)
 			throws IOException {
+		if (string == null) {
+			throw new MQTTException(
+					"Protocol error - error data");
+		}
 		byte[] bs = string.getBytes("UTF-8");
 		encodeLength(bs.length, out);
 		out.write(bs);
@@ -65,6 +69,10 @@ public abstract class Encoder {
 
 	protected void encodeString(String string, ByteBuffer buffer)
 			throws IOException {
+		if (string == null) {
+			throw new MQTTException(
+					"Protocol error - error data");
+		}
 		byte[] bs = string.getBytes("UTF-8");
 		encodeLength(bs.length, buffer);
 		buffer.put(bs);

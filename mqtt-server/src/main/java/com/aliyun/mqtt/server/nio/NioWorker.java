@@ -5,10 +5,13 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.logging.Logger;
 
-import com.aliyun.mqtt.server.Client;
+import com.aliyun.mqtt.server.client.Session;
 
 public class NioWorker implements Runnable {
+	
+	private static Logger logger = Logger.getLogger("mqtt-server");
 
 	private ServerSocketChannel server = null;
 	private Selector selector = null;
@@ -47,16 +50,23 @@ public class NioWorker implements Runnable {
 		if (key.isAcceptable()) {
 			ServerSocketChannel channel = (ServerSocketChannel) key.channel();
 			SocketChannel socket = channel.accept();
-			socket.register(selector, SelectionKey.OP_READ
+			socket.configureBlocking(false);
+			SelectionKey key1 = socket.register(selector, SelectionKey.OP_READ
 					| SelectionKey.OP_WRITE);
-			key.attach(new Client(socket));
+			key1.attach(new Session(socket));
+			logger.info("socket connected");
 		} else {
-			if (key.isReadable()) {
-				Client client = (Client)key.attachment();
-				client.readResponse();
-			} else if (key.isWritable()) {
-				Client client = (Client)key.attachment();
-				client.sendRequest();
+			Session client = (Session)key.attachment();
+			try {
+				if (key.isReadable()) {
+					client.readResponse();
+				} 
+				if (key.isWritable()) {
+					client.sendRequest();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				client.close();
 			}
 		}
 		
