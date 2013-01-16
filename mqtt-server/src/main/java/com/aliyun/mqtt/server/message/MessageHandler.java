@@ -9,6 +9,7 @@ import com.aliyun.mqtt.core.message.ConnectMessage;
 import com.aliyun.mqtt.core.message.Message;
 import com.aliyun.mqtt.core.message.PingReqMessage;
 import com.aliyun.mqtt.core.message.PingRespMessage;
+import com.aliyun.mqtt.core.message.SubscribeMessage;
 import com.aliyun.mqtt.server.ApplicationContext;
 import com.aliyun.mqtt.server.client.Session;
 
@@ -28,6 +29,9 @@ public class MessageHandler {
 			case MQTT.MESSAGE_TYPE_PINGREQ:
 				handlePingReq(session, (PingReqMessage)message);
 				break;
+			case MQTT.MESSAGE_TYPE_SUBSCRIBE:
+				handleSubscribe(session, (SubscribeMessage)message);
+				break;
 			}
 		}
 	}
@@ -41,6 +45,10 @@ public class MessageHandler {
 			//clean session
 		}
 		session.connectCallback(message);
+	}
+	
+	protected void handleSubscribe(Session session, SubscribeMessage message) {
+		
 	}
 	
 	protected void handlePingReq(Session session, PingReqMessage message) {
