@@ -69,17 +69,15 @@ public class MessageHandler {
 		SubAckMessage m = (SubAckMessage) message;
 		context.getSender().sendQosAck(
 				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_SUBSCRIBE) + m.getMessageID());
-		context.getClient().sendQosCallback(
-				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_SUBSCRIBE) + m.getMessageID(),
-				m);
+		context.getSender().callback(m, null);
 	}
 
 	protected void handlePublish(Message message) {
 		PublishMessage m = (PublishMessage) message;
 		if (message.getQos() == MQTT.QOS_MOST_ONCE) {
-			context.getClient().onMessage(m);
+			context.getClient().messageRecieved(m);
 		} else if (message.getQos() == MQTT.QOS_LEAST_ONCE) {
-			context.getClient().onMessage(m);
+			context.getClient().messageRecieved(m);
 			PubAckMessage ack = new PubAckMessage();
 			ack.setMessageID(m.getMessageID());
 			context.getSender().send(ack);
@@ -95,10 +93,7 @@ public class MessageHandler {
 		PubAckMessage m = (PubAckMessage) message;
 		context.getSender().sendQosAck(
 				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH) + m.getMessageID());
-		context.getClient()
-				.sendQosCallback(
-						MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH)
-								+ m.getMessageID(), m);
+		context.getSender().callback(m, null);
 	}
 
 	protected void handlePubRec(Message message) {
@@ -120,7 +115,7 @@ public class MessageHandler {
 		PublishMessage publishMessage = (PublishMessage) context
 				.getMessageStore().getQos2("" + m.getMessageID());
 		if (publishMessage != null) {
-			context.getClient().onMessage(publishMessage);
+			context.getClient().messageRecieved(publishMessage);
 		}
 
 		/* send comp message */
@@ -133,10 +128,7 @@ public class MessageHandler {
 		PubCompMessage m = (PubCompMessage) message;
 		context.getSender().sendQosAck(
 				MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBREL) + m.getMessageID());
-		context.getClient()
-				.sendQosCallback(
-						MQTT.TYPES.get(MQTT.MESSAGE_TYPE_PUBLISH)
-								+ m.getMessageID(), m);
+		context.getSender().callback(m, null);
 	}
 
 	protected void handlePingResp(Message message) {

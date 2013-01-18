@@ -6,8 +6,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,9 +20,7 @@ import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.ConnAckMessage;
 import com.aliyun.mqtt.core.message.ConnectMessage;
 import com.aliyun.mqtt.core.message.Message;
-import com.aliyun.mqtt.core.message.MessageIDMessage;
 import com.aliyun.mqtt.core.message.PingReqMessage;
-import com.aliyun.mqtt.core.message.PubRelMessage;
 import com.aliyun.mqtt.core.message.PublishMessage;
 import com.aliyun.mqtt.core.message.SubscribeMessage;
 import com.aliyun.mqtt.core.parser.ConnAckDecoder;
@@ -74,8 +70,7 @@ public class Client {
 		this.password = password;
 	}
 
-	private Map<String, Callback> registedCallbacks = new HashMap<String, Callback>();
-	private Callback defaultOnMessageCallback;
+	private Callback<PublishMessage> publishCallback;
 
 	private MQTTParser parser = null;
 
@@ -143,7 +138,7 @@ public class Client {
 		}
 		message.setKeepAlive(KEEPALIVE_SECS);
 		message.setCleanSession(cleanSession);
-		addSendMessage(message);
+		addSendMessage(message, null);
 		// suspend until the server respond with CONN_ACK
 		boolean unlocked = false;
 		try {
@@ -188,8 +183,8 @@ public class Client {
 		this.heartbeat();
 	}
 
-	public void setDefaultOnMessageCallback(Callback callback) {
-		this.defaultOnMessageCallback = callback;
+	public void onMessage(Callback<PublishMessage> callback) {
+		this.publishCallback = callback;
 	}
 
 	public void disconnect() {
@@ -208,7 +203,6 @@ public class Client {
 		if (heartbeatHandler != null) {
 			heartbeatHandler.cancel(false);
 		}
-		registedCallbacks.clear();
 		if (!scheduler.isShutdown()) {
 			scheduler.shutdown();
 		}
@@ -241,10 +235,6 @@ public class Client {
 		}
 	}
 
-	public void registeCallback(String name, Callback callback) {
-		this.registedCallbacks.put(name, callback);
-	}
-
 	public void connAckCallback(ConnAckMessage message) {
 		logger.info("connAckCallback invoked, ackCode=" + message.getAck());
 		connAckMessage = message;
@@ -259,16 +249,11 @@ public class Client {
 		subscribe(topic, qos, null);
 	}
 
-	public void subscribe(String topic, byte qos, Callback callback) {
+	public void subscribe(String topic, byte qos, Callback<Message> callback) {
 		SubscribeMessage message = new SubscribeMessage();
 		message.setMessageID(context.nextMessageID());
 		message.addTopic(topic, qos);
-		addSendMessage(message);
-		if (callback != null) {
-			registeCallback(
-					MQTT.TYPES.get(message.getType()) + message.getMessageID(),
-					callback);
-		}
+		addSendMessage(message, callback);
 		this.heartbeat();
 	}
 
@@ -285,67 +270,30 @@ public class Client {
 	}
 
 	public void publish(String topic, byte[] payload, byte qos, boolean retain,
-			Callback callback) {
+			Callback<Message> callback) {
 		PublishMessage publishMessage = new PublishMessage();
 		publishMessage.setQos(qos);
 		publishMessage.setRetain(retain);
 		publishMessage.setTopic(topic);
 		publishMessage.setPayload(payload);
 		publishMessage.setMessageID(context.nextMessageID());
-		addSendMessage(publishMessage);
-		if (callback != null) {
-			if (qos == MQTT.QOS_LEAST_ONCE || qos == MQTT.QOS_ONCE) {
-				registeCallback(MQTT.TYPES.get(publishMessage.getType())
-						+ publishMessage.getMessageID(), callback);
-			} else {
-				callback.callback(publishMessage);
-			}
-		}
+		addSendMessage(publishMessage, callback);
 		this.heartbeat();
 	}
 
-	public void sendQosCallback(String name, MessageIDMessage message) {
-		logger.info(message.getClass().getSimpleName()
-				+ " callback invoked, messageID=" + message.getMessageID());
-		Callback callback = registedCallbacks.remove(name);
-		if (callback != null) {
-			callback.callback(message);
-		}
-	}
-
-	public void sendQosFailCallback(MessageIDMessage message) {
-		logger.info(message.getClass().getSimpleName()
-				+ " fail callback invoked, messageID=" + message.getMessageID());
-		byte type = message.getType();
-		if (message instanceof PubRelMessage) {
-			/* publish fail */
-			type = MQTT.MESSAGE_TYPE_PUBLISH;
-		}
-		Callback callback = registedCallbacks.remove(MQTT.TYPES.get(type)
-				+ message.getMessageID());
-		if (callback != null) {
-			callback.callback(null);
-		}
-	}
-
-	public void onMessage(PublishMessage publishMessage) {
+	public void messageRecieved(PublishMessage publishMessage) {
 		logger.info("Received a publish message : messageID="
 				+ publishMessage.getMessageID() + "\nqos="
 				+ publishMessage.getQos() + "\ntopic="
 				+ publishMessage.getTopic());
-		String topic = publishMessage.getTopic();
-		Callback callback = registedCallbacks.get("ONMESSAGE_" + topic);
-		if (callback == null) {
-			callback = defaultOnMessageCallback;
-		}
-		if (callback != null) {
-			callback.callback(publishMessage);
+		if (this.publishCallback != null) {
+			this.publishCallback.onSuccess(publishMessage);
 		}
 	}
 
 	final Runnable pingreqDeamon = new Runnable() {
 		public void run() {
-			addSendMessage(new PingReqMessage());
+			addSendMessage(new PingReqMessage(), null);
 		}
 	};
 
@@ -357,8 +305,8 @@ public class Client {
 				KEEPALIVE_SECS, KEEPALIVE_SECS, TimeUnit.SECONDS);
 	}
 
-	protected void addSendMessage(Message message) {
-		context.getSender().send(message);
+	protected void addSendMessage(Message message, Callback<Message> callback) {
+		context.getSender().send(message, callback);
 	}
 
 	public Context getContext() {
