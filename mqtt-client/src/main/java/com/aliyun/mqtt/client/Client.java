@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.aliyun.mqtt.client.callback.Callback;
+import com.aliyun.mqtt.client.nio.NioWorker;
 import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.ConnAckMessage;
@@ -43,7 +44,6 @@ import com.aliyun.mqtt.core.parser.PublishDecoder;
 import com.aliyun.mqtt.core.parser.PublishEncoder;
 import com.aliyun.mqtt.core.parser.SubAckDecoder;
 import com.aliyun.mqtt.core.parser.SubscribeEncoder;
-import com.aliyun.mqtt.nio.NioWorker;
 
 /**
  * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午8:12 To change
