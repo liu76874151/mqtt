@@ -71,7 +71,7 @@ public class Context {
 	}
 
 	public void stopClient() {
-		client.close();
+		client.reconnect();
 	}
 
 	public void clear() {

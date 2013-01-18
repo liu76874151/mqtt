@@ -27,6 +27,8 @@ public class NioWorker implements Runnable {
 	private ByteBuffer buffer = null;
 	
 	private byte[] array = new byte[256];
+	
+	private boolean stoped = false;
 
 	public NioWorker(SocketChannel socketChannel, Selector selector,
 			Context context) {
@@ -38,7 +40,7 @@ public class NioWorker implements Runnable {
 	public void run() {
 		try {
 			while (true) {
-				if (!socketChannel.isOpen()) {
+				if (!socketChannel.isOpen() || stoped) {
 					break;
 				}
 				if (selector.select(30) > 0) {
@@ -46,7 +48,6 @@ public class NioWorker implements Runnable {
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
 			stopClient();
 		}
 	}
@@ -124,5 +125,9 @@ public class NioWorker implements Runnable {
 
 	public void stopClient() {
 		context.stopClient();
+	}
+	
+	public void stop() {
+		stoped = true;
 	}
 }

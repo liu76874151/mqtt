@@ -2,11 +2,9 @@ package com.aliyun.mqtt.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -50,7 +48,9 @@ public class Client {
 	private static Logger logger = Logger.getLogger("mqtt-client");
 
 	/* CONNECT_TIMEOUT */
-	private static final long CONNECT_TIMEOUT = 10 * 1000L;
+	private static final long CONNECT_TIMEOUT = 3 * 1000L;
+	private static final long RECONNECT_TIMES = 3;
+	
 	/* KEEPALIVE_SECS */
 	private static final int KEEPALIVE_SECS = 6;
 
@@ -61,6 +61,7 @@ public class Client {
 	private String clientID;
 	private String username;
 	private String password;
+	private boolean closed = true;
 
 	public void setUsername(String username) {
 		this.username = username;
@@ -74,11 +75,13 @@ public class Client {
 
 	private MQTTParser parser = null;
 
-	private CountDownLatch connectBarrier;
+	private NioWorker nioWorker;
+	
 	private ScheduledExecutorService scheduler;
 	private ScheduledFuture<?> heartbeatHandler;
-
-	private ConnAckMessage connAckMessage = null;
+	private ScheduledFuture<?> connectHandler;
+	private ScheduledFuture<?> reconnectHandler;
+	private Callback<ConnAckMessage> connectCallback;
 
 	private Context context = new Context(this);
 
@@ -118,14 +121,52 @@ public class Client {
 		context.registeScheduler(scheduler);
 	}
 
-	public void connect() {
-		connect(true);
+	public void connect(Callback<ConnAckMessage> connectCallback) {
+		connect(true, connectCallback);
 	}
 
-	public void connect(boolean cleanSession) {
-		socketConnet();
-
-		connectBarrier = new CountDownLatch(1);
+	public void connect(boolean cleanSession, Callback<ConnAckMessage> connectCallback) {
+		this.connectCallback = connectCallback;
+		try {
+			socketConnet();
+		} catch (IOException e) {
+			this.connectCallback.onFailure(e);
+			return;
+		}
+		
+		/* add to the head of queue */
+		context.getSender().sendNow(buildConnectMessage(cleanSession));
+		
+		nioWorker = new NioWorker(socketChannel, selector, context);
+		new Thread(nioWorker).start();
+		
+		connectHandler = scheduler.schedule(new Runnable() {
+			public void run() {
+				/* Connection timeout (no CONNACK) */
+				Client.this.close();
+				Client.this.connectCallback.onFailure(new MQTTException("Connection timeout (no CONNACK)"));
+			}
+		}, CONNECT_TIMEOUT, TimeUnit.MILLISECONDS);
+	}
+	
+	private void socketConnet() throws IOException {
+		try {
+			InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+			socketChannel = SocketChannel.open();
+			socketChannel.socket().setReuseAddress(true);
+			socketChannel.connect(socketAddress);
+			selector = Selector.open();
+			socketChannel.configureBlocking(false);
+			socketChannel.register(selector, SelectionKey.OP_READ
+					| SelectionKey.OP_WRITE);
+			logger.info("Connected to " + host + " and port:" + port);
+		} catch (IOException e) {
+			logger.warning("Connecting fail or time out : IOException " + e.getMessage());
+			throw e;
+		}
+	}
+	
+	private ConnectMessage buildConnectMessage(boolean cleanSession) {
 		ConnectMessage message = new ConnectMessage();
 		message.setClientID(clientID);
 		if (this.username != null) {
@@ -138,27 +179,60 @@ public class Client {
 		}
 		message.setKeepAlive(KEEPALIVE_SECS);
 		message.setCleanSession(cleanSession);
-		addSendMessage(message, null);
-		// suspend until the server respond with CONN_ACK
-		boolean unlocked = false;
-		try {
-			unlocked = connectBarrier.await(CONNECT_TIMEOUT,
-					TimeUnit.MILLISECONDS);
-		} catch (InterruptedException ex) {
-			this.close();
-			throw new MQTTException(ex);
-		}
+		return message;
+	}
 
-		// if not arrive into certain limit, raise an error
-		if (!unlocked) {
-			this.close();
-			throw new MQTTException(
-					"Connection timeout elapsed unless server responded with a CONN_ACK");
-		}
+	public void onMessage(Callback<PublishMessage> callback) {
+		this.publishCallback = callback;
+	}
 
-		if (connAckMessage.getAck() != 0) {
+	public void disconnect() {
+		close();
+	}
+
+	public void close() {
+		closed = true;
+		if (socketChannel != null && socketChannel.isConnected()) {
+			try {
+				socketChannel.close();
+				logger.info("Socket disconnect");
+			} catch (IOException e) {
+				logger.warning("Channel closed to failed: IOException");
+			}
+		}
+		if (heartbeatHandler != null) {
+			heartbeatHandler.cancel(false);
+		}
+		if (!scheduler.isShutdown()) {
+			scheduler.shutdown();
+		}
+		context.clear();
+	}
+
+	public void connAckCallback(ConnAckMessage message) {
+		logger.info("connAckCallback invoked, ackCode=" + message.getAck());
+		
+		/* it's reconnect ack */
+		if (this.reconnectHandler != null) {
+			this.reconnectHandler.cancel(false);
+			this.reconnectHandler = null;
+			if (message.getAck() == 0) {
+				this.heartbeat();
+			} else {
+				close();
+			}
+			return;
+		}
+		
+		/* it's first connect ack */
+		if (this.connectHandler.isDone()) {
+			return;
+		}
+		this.connectHandler.cancel(false);
+		
+		if (message.getAck() != 0) {
 			String errMsg = null;
-			switch (connAckMessage.getAck()) {
+			switch (message.getAck()) {
 			case 1:
 				errMsg = "Unacceptable protocol version";
 				break;
@@ -178,67 +252,12 @@ public class Client {
 				break;
 			}
 			this.close();
-			throw new MQTTException(errMsg);
+			this.connectCallback.onFailure(new MQTTException(errMsg));
+			return;
 		}
+		closed = false;
+		this.connectCallback.onSuccess(message);
 		this.heartbeat();
-	}
-
-	public void onMessage(Callback<PublishMessage> callback) {
-		this.publishCallback = callback;
-	}
-
-	public void disconnect() {
-		close();
-	}
-
-	public void close() {
-		if (socketChannel != null && socketChannel.isConnected()) {
-			try {
-				socketChannel.close();
-				logger.info("server_socket has disconnected");
-			} catch (IOException e) {
-				logger.warning("Channel closed to failed: IOException");
-			}
-		}
-		if (heartbeatHandler != null) {
-			heartbeatHandler.cancel(false);
-		}
-		if (!scheduler.isShutdown()) {
-			scheduler.shutdown();
-		}
-		context.clear();
-	}
-
-	private void socketConnet() {
-		try {
-			InetSocketAddress socketAddress = new InetSocketAddress(host, port);
-			socketChannel = SocketChannel.open();
-			socketChannel.socket().setReuseAddress(true);
-			socketChannel.connect(socketAddress);
-			if (socketChannel.isOpen()) {
-				selector = Selector.open();
-				socketChannel.configureBlocking(false);
-				socketChannel.register(selector, SelectionKey.OP_READ
-						| SelectionKey.OP_WRITE);
-				NioWorker nioWorker = new NioWorker(socketChannel, selector,
-						context);
-				new Thread(nioWorker).start();
-				logger.info("Has been successfully connected to " + host
-						+ "and port:" + port);
-			} else {
-				close();
-			}
-		} catch (ClosedChannelException e) {
-			logger.warning("Channel is closed: ClosedChannelException");
-		} catch (IOException e) {
-			logger.warning("Connet is failed or time out,the system will automatically re-connected : IOException");
-		}
-	}
-
-	public void connAckCallback(ConnAckMessage message) {
-		logger.info("connAckCallback invoked, ackCode=" + message.getAck());
-		connAckMessage = message;
-		connectBarrier.countDown();
 	}
 
 	public void subscribe(String topic) {
@@ -250,6 +269,12 @@ public class Client {
 	}
 
 	public void subscribe(String topic, byte qos, Callback<Message> callback) {
+		if (closed()) {
+			if (callback != null) {
+				callback.onFailure(new MQTTException("Session closed"));
+			}
+			return;
+		}
 		SubscribeMessage message = new SubscribeMessage();
 		message.setMessageID(context.nextMessageID());
 		message.addTopic(topic, qos);
@@ -271,6 +296,12 @@ public class Client {
 
 	public void publish(String topic, byte[] payload, byte qos, boolean retain,
 			Callback<Message> callback) {
+		if (closed()) {
+			if (callback != null) {
+				callback.onFailure(new MQTTException("Session closed"));
+			}
+			return;
+		}
 		PublishMessage publishMessage = new PublishMessage();
 		publishMessage.setQos(qos);
 		publishMessage.setRetain(retain);
@@ -312,5 +343,41 @@ public class Client {
 	public Context getContext() {
 		return context;
 	}
-
+	
+	public boolean closed() {
+		return closed;
+	}
+	
+	/**
+	 * reconnect to mqtt server
+	 */
+	public void reconnect() {
+		reconnect(1);
+	}
+	
+	private void reconnect(final int attempt) {
+		if (attempt > RECONNECT_TIMES) {
+			this.reconnectHandler = null;
+			logger.warning("Reconnect attempt too muth, close");
+			close();
+			return;
+		}
+		logger.info("Reconnect attempt " + attempt);
+		nioWorker.stop();
+		try {
+			socketChannel.close();
+			socketConnet();
+			context.getSender().sendNow(buildConnectMessage(false));
+			nioWorker = new NioWorker(socketChannel, selector, context);
+			new Thread(nioWorker).start();
+		} catch (IOException e) {
+		}
+		/* add to the head of queue */
+		this.reconnectHandler = scheduler.schedule(new Runnable() {
+			public void run() {
+				reconnect(attempt + 1);
+			}
+		}, CONNECT_TIMEOUT, TimeUnit.MILLISECONDS);
+	}
+	
 }

@@ -27,7 +27,7 @@ public class MessageHandler {
 	public void handle(ByteBuffer buffer) {
 		Message message = context.getParser().decode(buffer);
 		if (message != null) {
-			logger.info("Received a message of type "
+			logger.fine("Received a message of type "
 					+ message.getClass().getSimpleName());
 			switch (message.getType()) {
 			case MQTT.MESSAGE_TYPE_CONNACK: // 0x02
@@ -55,7 +55,7 @@ public class MessageHandler {
 				handlePingResp(message);
 				break;
 			default:
-				logger.info("Handler not exist");
+				logger.warning("Handler not exist");
 				break;
 			}
 		}

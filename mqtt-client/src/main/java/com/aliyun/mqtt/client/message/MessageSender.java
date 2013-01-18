@@ -49,8 +49,12 @@ public class MessageSender {
 			sendQos2((PublishMessage) message, 0);
 		} else {
 			message.setQos(MQTT.QOS_MOST_ONCE);
-			send0(message);
+			send0(message, false);
 		}
+	}
+	
+	public void sendNow(Message message) {
+		send0(message, true);
 	}
 
 	public void send(Message message, Callback<Message> callback) {
@@ -86,7 +90,7 @@ public class MessageSender {
 					}
 				}, SCHEDULE_DELAY, TimeUnit.MILLISECONDS);
 		scheduledFutures.put(name + message.getMessageID(), future);
-		send0(message);
+		send0(message, false);
 	}
 
 	private void sendQos2(final MessageIDMessage message, int tryTimes) {
@@ -107,7 +111,7 @@ public class MessageSender {
 					}
 				}, SCHEDULE_DELAY, TimeUnit.MILLISECONDS);
 		scheduledFutures.put(name + message.getMessageID(), future);
-		send0(message);
+		send0(message, false);
 	}
 
 	public void sendQosAck(String name) {
@@ -141,13 +145,17 @@ public class MessageSender {
 		}
 	}
 
-	private void send0(Message message) {
+	private void send0(Message message, boolean eagerly) {
 		try {
-			logger.info("Send a message of type "
+			logger.fine("Send a message of type "
 					+ message.getClass().getSimpleName());
 			ByteBuffer buffer = context.getParser().encode(message);
 			if (buffer != null) {
-				context.getMessageQueue().add(buffer);
+				if (eagerly) {
+					context.getMessageQueue().addFirst(buffer);
+				} else {
+					context.getMessageQueue().add(buffer);
+				}
 			}
 		} catch (MQTTException e) {
 			e.printStackTrace();
