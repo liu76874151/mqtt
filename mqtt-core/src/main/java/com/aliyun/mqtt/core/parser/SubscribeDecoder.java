@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.Message;
 import com.aliyun.mqtt.core.message.SubscribeMessage;
-import com.aliyun.mqtt.core.message.SubscribeMessage.Topic;
 
 public class SubscribeDecoder extends Decoder {
 

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import com.aliyun.mqtt.client.Context;
@@ -51,12 +52,14 @@ public class NioWorker implements Runnable {
 	}
 
 	public void doSelector() throws IOException {
-		for (SelectionKey key : selector.selectedKeys()) {
-			selector.selectedKeys().remove(key);
+		Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
+		while(iter.hasNext()) {
+			SelectionKey key = iter.next();
 			if (!key.isValid()) {
 				continue;
 			}
 			doKeys(key);
+			iter.remove();
 		}
 	}
 

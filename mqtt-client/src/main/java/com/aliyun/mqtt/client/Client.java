@@ -63,6 +63,16 @@ public class Client {
 	private String host = "0.0.0.0";
 	private int port = 1883;
 	private String clientID;
+	private String username;
+	private String password;
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
 
 	private Map<String, Callback> registedCallbacks = new HashMap<String, Callback>();
 	private Callback defaultOnMessageCallback;
@@ -123,6 +133,14 @@ public class Client {
 		connectBarrier = new CountDownLatch(1);
 		ConnectMessage message = new ConnectMessage();
 		message.setClientID(clientID);
+		if (this.username != null) {
+			message.setHasUsername(true);
+			message.setUsername(this.username);
+		}
+		if (this.password != null) {
+			message.setHasPassword(true);
+			message.setPassword(password);
+		}
 		message.setKeepAlive(KEEPALIVE_SECS);
 		message.setCleanSession(cleanSession);
 		addSendMessage(message);
