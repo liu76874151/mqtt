@@ -11,10 +11,6 @@ import java.util.logging.Logger;
 import com.aliyun.mqtt.client.Context;
 import com.aliyun.mqtt.core.MQTTException;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午8:19 To change
- * this template use File | Settings | File Templates.
- */
 public class NioWorker implements Runnable {
 
 	private static Logger logger = Logger.getLogger("mqtt-client");

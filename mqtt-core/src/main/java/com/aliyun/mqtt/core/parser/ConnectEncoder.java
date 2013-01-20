@@ -8,10 +8,6 @@ import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.message.ConnectMessage;
 import com.aliyun.mqtt.core.message.Message;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午9:54 To change
- * this template use File | Settings | File Templates.
- */
 public class ConnectEncoder extends Encoder {
 
 	@Override

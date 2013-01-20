@@ -2,10 +2,6 @@ package com.aliyun.mqtt.core.message;
 
 import com.aliyun.mqtt.core.MQTT;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-7 Time: 下午9:57 To change
- * this template use File | Settings | File Templates.
- */
 public class PublishMessage extends MessageIDMessage {
 
 	public PublishMessage() {

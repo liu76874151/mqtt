@@ -28,6 +28,11 @@ public class MQTTParser {
 		decoders.put(name, encoder);
 	}
 
+	/**
+	 * encode to byte buffer
+	 * @param message
+	 * @return
+	 */
 	public ByteBuffer encode(Message message) {
 		String name = message.getClass().getSimpleName().replace("Message", "")
 				.toUpperCase();
@@ -39,6 +44,11 @@ public class MQTTParser {
 		return encoder.encode(message);
 	}
 
+	/**
+	 * decode byte buffer
+	 * @param buffer
+	 * @return
+	 */
 	public Message decode(ByteBuffer buffer) {
 		int pos = buffer.position();
 		String name = MQTT.TYPES.get((byte) ((buffer.get() & 0xF0) >> 4));

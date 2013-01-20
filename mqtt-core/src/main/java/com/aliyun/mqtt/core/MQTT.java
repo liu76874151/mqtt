@@ -3,10 +3,6 @@ package com.aliyun.mqtt.core;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午10:02 To change
- * this template use File | Settings | File Templates.
- */
 public class MQTT {
 
 	public final static String VERSION = "\00\06MQIsdp\03";

@@ -1,6 +1,9 @@
 package com.aliyun.mqtt.core.message;
 
-public class MessageIDMessage extends Message {
+/**
+ * message with a message id, it's abstract
+ */
+public abstract class MessageIDMessage extends Message {
 
 	private int messageID;
 

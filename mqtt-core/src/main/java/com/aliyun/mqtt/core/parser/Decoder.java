@@ -6,10 +6,6 @@ import java.nio.ByteBuffer;
 import com.aliyun.mqtt.core.MQTTException;
 import com.aliyun.mqtt.core.message.Message;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午9:37 To change
- * this template use File | Settings | File Templates.
- */
 public abstract class Decoder {
 
 	public void decodeHeader(Message message, ByteBuffer buffer) {

@@ -9,6 +9,7 @@ public class SubscribeMessage extends MessageIDMessage {
 
 	public SubscribeMessage() {
 		this.type = MQTT.MESSAGE_TYPE_SUBSCRIBE;
+		/* qos1 */
 		setQos(MQTT.QOS_LEAST_ONCE);
 	}
 

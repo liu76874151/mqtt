@@ -2,10 +2,6 @@ package com.aliyun.mqtt.core.message;
 
 import com.aliyun.mqtt.core.MQTT;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午10:04 To change
- * this template use File | Settings | File Templates.
- */
 public class ConnectMessage extends Message {
 	public ConnectMessage() {
 		this.type = MQTT.MESSAGE_TYPE_CONNECT;

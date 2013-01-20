@@ -39,10 +39,6 @@ import com.aliyun.mqtt.core.parser.PublishEncoder;
 import com.aliyun.mqtt.core.parser.SubAckDecoder;
 import com.aliyun.mqtt.core.parser.SubscribeEncoder;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午8:12 To change
- * this template use File | Settings | File Templates.
- */
 public class Client {
 
 	private static Logger logger = Logger.getLogger("mqtt-client");
@@ -69,6 +65,10 @@ public class Client {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public void setClientID(String clientID) {
+		this.clientID = clientID;
 	}
 
 	private Callback<PublishMessage> publishCallback;

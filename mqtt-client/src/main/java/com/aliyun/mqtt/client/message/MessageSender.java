@@ -17,10 +17,6 @@ import com.aliyun.mqtt.core.message.MessageIDMessage;
 import com.aliyun.mqtt.core.message.PubRecMessage;
 import com.aliyun.mqtt.core.message.PublishMessage;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-7 Time: 下午10:22 To change
- * this template use File | Settings | File Templates.
- */
 public class MessageSender {
 
 	private static final long SCHEDULE_DELAY = 3 * 1000L;
@@ -41,6 +37,10 @@ public class MessageSender {
 		this.context = context;
 	}
 
+	/**
+	 * add to message queue
+	 * @param message
+	 */
 	public void send(Message message) {
 		if (message.getQos() == MQTT.QOS_LEAST_ONCE) {
 			sendQos1((MessageIDMessage) message, 0);
@@ -53,10 +53,19 @@ public class MessageSender {
 		}
 	}
 	
+	/**
+	 * add to the head of message queue
+	 * @param message
+	 */
 	public void sendNow(Message message) {
 		send0(message, true);
 	}
 
+	/**
+	 * send with callbcak
+	 * @param message
+	 * @param callback
+	 */
 	public void send(Message message, Callback<Message> callback) {
 		send(message);
 		if (callback != null) {
@@ -70,6 +79,11 @@ public class MessageSender {
 		}
 	}
 
+	/**
+	 * qos1
+	 * @param message
+	 * @param tryTimes
+	 */
 	private void sendQos1(final MessageIDMessage message, int tryTimes) {
 		String name = MQTT.TYPES.get(message.getType());
 		final int t = tryTimes + 1;
@@ -93,6 +107,11 @@ public class MessageSender {
 		send0(message, false);
 	}
 
+	/**
+	 * qos2
+	 * @param message
+	 * @param tryTimes
+	 */
 	private void sendQos2(final MessageIDMessage message, int tryTimes) {
 		String name = MQTT.TYPES.get(message.getType());
 		final int t = tryTimes + 1;
@@ -114,6 +133,10 @@ public class MessageSender {
 		send0(message, false);
 	}
 
+	/**
+	 * receive ack, cancel scheduler
+	 * @param name
+	 */
 	public void sendQosAck(String name) {
 		ScheduledFuture<?> future = scheduledFutures.remove(name);
 		if (future != null) {

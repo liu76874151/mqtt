@@ -6,10 +6,6 @@ import com.aliyun.mqtt.core.MQTT;
 import com.aliyun.mqtt.core.message.ConnAckMessage;
 import com.aliyun.mqtt.core.message.Message;
 
-/**
- * Created with IntelliJ IDEA. User: lijing Date: 13-1-6 Time: 下午8:14 To change
- * this template use File | Settings | File Templates.
- */
 public class Main {
 
 	public static void main(String[] args) throws InterruptedException {

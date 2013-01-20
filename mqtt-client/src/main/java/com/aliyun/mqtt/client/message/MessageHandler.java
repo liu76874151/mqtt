@@ -24,6 +24,10 @@ public class MessageHandler {
 		this.context = context;
 	}
 
+	/**
+	 * handle message
+	 * @param buffer
+	 */
 	public void handle(ByteBuffer buffer) {
 		Message message = context.getParser().decode(buffer);
 		if (message != null) {
