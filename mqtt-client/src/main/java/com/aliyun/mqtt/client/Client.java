@@ -182,6 +182,10 @@ public class Client {
 		return message;
 	}
 
+	/**
+	 * onMessage callback
+	 * @param callback
+	 */
 	public void onMessage(Callback<PublishMessage> callback) {
 		this.publishCallback = callback;
 	}
@@ -190,6 +194,9 @@ public class Client {
 		close();
 	}
 
+	/**
+	 * close session
+	 */
 	public void close() {
 		closed = true;
 		if (socketChannel != null && socketChannel.isConnected()) {
@@ -203,16 +210,23 @@ public class Client {
 		if (heartbeatHandler != null) {
 			heartbeatHandler.cancel(false);
 		}
+		if (this.reconnectHandler != null) {
+			this.reconnectHandler.cancel(false);
+		}
 		if (!scheduler.isShutdown()) {
 			scheduler.shutdown();
 		}
 		context.clear();
 	}
 
+	/**
+	 * ConnAck
+	 * @param message
+	 */
 	public void connAckCallback(ConnAckMessage message) {
 		logger.info("connAckCallback invoked, ackCode=" + message.getAck());
 		
-		/* it's reconnect ack */
+		/* it's a reconnect ack */
 		if (this.reconnectHandler != null) {
 			this.reconnectHandler.cancel(false);
 			this.reconnectHandler = null;
@@ -224,7 +238,7 @@ public class Client {
 			return;
 		}
 		
-		/* it's first connect ack */
+		/* it's the first connect ack */
 		if (this.connectHandler.isDone()) {
 			return;
 		}
@@ -268,6 +282,12 @@ public class Client {
 		subscribe(topic, qos, null);
 	}
 
+	/**
+	 * subscribe a topic
+	 * @param topic
+	 * @param qos
+	 * @param callback
+	 */
 	public void subscribe(String topic, byte qos, Callback<Message> callback) {
 		if (closed()) {
 			if (callback != null) {
@@ -294,6 +314,14 @@ public class Client {
 		publish(topic, payload, qos, retain, null);
 	}
 
+	/**
+	 * publish a message
+	 * @param topic
+	 * @param payload
+	 * @param qos
+	 * @param retain
+	 * @param callback
+	 */
 	public void publish(String topic, byte[] payload, byte qos, boolean retain,
 			Callback<Message> callback) {
 		if (closed()) {
@@ -312,7 +340,11 @@ public class Client {
 		this.heartbeat();
 	}
 
-	public void messageRecieved(PublishMessage publishMessage) {
+	/**
+	 * receive publish message
+	 * @param publishMessage
+	 */
+	public void messageReceived(PublishMessage publishMessage) {
 		logger.info("Received a publish message : messageID="
 				+ publishMessage.getMessageID() + "\nqos="
 				+ publishMessage.getQos() + "\ntopic="
@@ -328,6 +360,9 @@ public class Client {
 		}
 	};
 
+	/**
+	 * heartbeat/send a PingReq message
+	 */
 	public void heartbeat() {
 		if (heartbeatHandler != null) {
 			heartbeatHandler.cancel(false);

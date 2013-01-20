@@ -75,9 +75,9 @@ public class MessageHandler {
 	protected void handlePublish(Message message) {
 		PublishMessage m = (PublishMessage) message;
 		if (message.getQos() == MQTT.QOS_MOST_ONCE) {
-			context.getClient().messageRecieved(m);
+			context.getClient().messageReceived(m);
 		} else if (message.getQos() == MQTT.QOS_LEAST_ONCE) {
-			context.getClient().messageRecieved(m);
+			context.getClient().messageReceived(m);
 			PubAckMessage ack = new PubAckMessage();
 			ack.setMessageID(m.getMessageID());
 			context.getSender().send(ack);
@@ -115,7 +115,7 @@ public class MessageHandler {
 		PublishMessage publishMessage = (PublishMessage) context
 				.getMessageStore().getQos2("" + m.getMessageID());
 		if (publishMessage != null) {
-			context.getClient().messageRecieved(publishMessage);
+			context.getClient().messageReceived(publishMessage);
 		}
 
 		/* send comp message */
